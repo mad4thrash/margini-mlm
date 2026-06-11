@@ -12,6 +12,7 @@ Started: Thu Jun 11 14:12:51 CEST 2026
 - Validate remote function write inputs with a Standard Schema library such as Valibot before calling Prisma.
 - Use `src/lib/margins.ts` as the shared source for product margin calculations so UI display and CSV export stay consistent.
 - Use `src/lib/product-table.ts` for editable product row defaults, row margin projection, and margin tone thresholds that table-adjacent features need to share.
+- Use a small route-level workspace component when sibling controls need to share live page state, such as settings updates that immediately affect product table calculations.
 ---
 
 ## 2026-06-11 14:23:49 +02:00 - US-001
@@ -71,4 +72,17 @@ Started: Thu Jun 11 14:12:51 CEST 2026
   - Another local Vite app was already bound to `localhost:5173`, so use an alternate port such as `5174` when verifying this repo if 5173 is occupied.
   - The table currently reads `payoutPercent` through `getSettings()` but has no settings editor yet; US-006 should add the settings UI and can reuse the current query.
   - Remote command buttons enter a transient saving state; browser checks should wait for `Salvo` to return to `Salva` before issuing the next row mutation.
+---
+
+## 2026-06-11 15:19:31 +02:00 - US-006
+- Added an `Impostazioni` payout settings section on the operational page, with non-negative percentage validation and persistence through the existing SvelteKit remote `updateSettings` command.
+- Added a route-level workspace wrapper so saved payout changes immediately update the product table's margin calculations, and reloads hydrate the persisted payout from SQLite.
+- Added payout settings helper coverage for editable state defaults and invalid percentage rejection.
+- Files changed: `src/lib/settings.ts`, `src/lib/settings.test.ts`, `src/routes/+page.svelte`, `src/routes/ProductWorkspace.svelte`, `src/routes/SettingsPanel.svelte`, `prd.json`, `progress.txt`.
+- Quality checks run and results: `npm test` passed with 4 test files and 12 tests; `npm run check` passed with 0 errors and 0 warnings; `npm run build` passed.
+- Browser verification result: in-app Browser target `iab` was unavailable, so local headless Chrome was used against `http://127.0.0.1:5175/`; verified negative payout input keeps save disabled, saving `10%` persists after reload, and a verification product's margin changed from `55,00 EUR / 55,0%` at `0%` payout to `42,80 EUR / 42,8%` at `10%` payout. The temporary verification product was removed.
+- **Learnings for future iterations:**
+  - Remote query refresh after a settings command can remount UI inside the page await block, so browser verification should prefer durable visible state such as persisted input values and table calculations over transient success text.
+  - The in-app Browser target `iab` remained unavailable in this run; headless Chrome with the DevTools protocol worked for local UI verification.
+  - Keep settings input validation in shared helpers when the component needs both disabled-state logic and testable invalid-value handling.
 ---
