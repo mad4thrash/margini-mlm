@@ -1,0 +1,20 @@
+# codex-ralph Progress Log
+Started: Thu Jun 11 14:12:51 CEST 2026
+---
+
+## Codebase Patterns
+- Keep SvelteKit configuration in `svelte.config.js`; use `vite.config.ts` only to register Vite plugins such as Tailwind and `sveltekit()`.
+- Remote functions require both `kit.experimental.remoteFunctions: true` and `compilerOptions.experimental.async: true`.
+---
+
+## 2026-06-11 14:23:49 +02:00 - US-001
+- Scaffolded a SvelteKit app with Svelte 5, TypeScript, Tailwind CSS, and the default route.
+- Added the required SvelteKit remote-function experimental configuration in `svelte.config.js`.
+- Files changed: `.gitignore`, `.npmrc`, `.vscode/extensions.json`, `.vscode/settings.json`, `README.md`, `package.json`, `package-lock.json`, `svelte.config.js`, `tsconfig.json`, `vite.config.ts`, `src/app.d.ts`, `src/app.html`, `src/lib/index.ts`, `src/lib/assets/favicon.svg`, `src/routes/+layout.svelte`, `src/routes/+page.svelte`, `src/routes/layout.css`, `static/robots.txt`, `progress.txt`, `prd.json`.
+- Quality checks run and results: `npm run check` passed with 0 errors and 0 warnings; `npm run build` passed; no lint or test scripts exist yet for this scaffold story.
+- Browser verification result: in-app Browser target `iab` was unavailable; fallback HTTP verification against `http://127.0.0.1:5173/` confirmed the default route rendered `Welcome to SvelteKit` and included Tailwind CSS.
+- **Learnings for future iterations:**
+  - The `sv` experimental add-on can select `next` prerelease SvelteKit packages; pin stable SvelteKit dependencies when remote functions are available in stable releases.
+  - On Windows, start npm background processes with `npm.cmd`, not `npm`, when using `Start-Process`.
+  - `@types/node` is needed for clean `svelte-check` output with the generated SvelteKit TypeScript config.
+---
