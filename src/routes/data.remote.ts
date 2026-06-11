@@ -6,6 +6,7 @@ import {
 	createProduct as createProductRecord,
 	deleteProduct as deleteProductRecord,
 	getSettings as getSettingsRecord,
+	importProducts as importProductRecords,
 	listProducts,
 	updateProduct as updateProductRecord,
 	updateSettings as updateSettingsRecord
@@ -34,6 +35,10 @@ const settingsSchema = v.object({
 	payoutPercent: v.pipe(v.number(), v.minValue(0))
 });
 
+const productImportSchema = v.object({
+	products: v.array(productSchema)
+});
+
 export const getProducts = query(async () => {
 	return listProducts(prisma);
 });
@@ -57,6 +62,12 @@ export const updateProduct = command(productUpdateSchema, async (input) => {
 export const deleteProduct = command(idSchema, async (input) => {
 	await deleteProductRecord(prisma, input);
 	getProducts().set(await listProducts(prisma));
+});
+
+export const importProductsCsv = command(productImportSchema, async (input) => {
+	const result = await importProductRecords(prisma, input.products);
+	const products = await listProducts(prisma);
+	return { ...result, products };
 });
 
 export const updateSettings = command(settingsSchema, async (input) => {

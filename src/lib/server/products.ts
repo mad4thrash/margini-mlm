@@ -18,6 +18,11 @@ export type ProductDeleteInput = {
 	id: number;
 };
 
+export type ProductImportResult = {
+	created: number;
+	updated: number;
+};
+
 export type SettingsInput = {
 	payoutPercent: number;
 };
@@ -61,6 +66,45 @@ export async function deleteProduct(db: PrismaClient, input: ProductDeleteInput)
 	await db.product.delete({
 		where: { id: input.id }
 	});
+}
+
+export async function importProducts(
+	db: PrismaClient,
+	products: ProductInput[]
+): Promise<ProductImportResult> {
+	let created = 0;
+	let updated = 0;
+
+	for (const product of products) {
+		const existing = await db.product.findUnique({
+			where: { code: product.code },
+			select: { id: true }
+		});
+
+		await db.product.upsert({
+			where: { code: product.code },
+			create: {
+				...product,
+				discountPercent: product.discountPercent ?? 0
+			},
+			update: {
+				description: product.description,
+				category: product.category,
+				listPrice: product.listPrice,
+				supplierPrice: product.supplierPrice,
+				vatRate: product.vatRate,
+				discountPercent: product.discountPercent ?? 0
+			}
+		});
+
+		if (existing) {
+			updated += 1;
+		} else {
+			created += 1;
+		}
+	}
+
+	return { created, updated };
 }
 
 export async function updateSettings(db: PrismaClient, input: SettingsInput) {

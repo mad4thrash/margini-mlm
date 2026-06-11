@@ -5,8 +5,13 @@
 		type EditableProductRow,
 		type ProductTableProduct
 	} from '$lib/product-table';
+	import {
+		CSV_PRODUCT_TEMPLATE,
+		parseProductsCsv,
+		type CsvRowError
+	} from '$lib/csv-products';
 
-	import { createProduct, deleteProduct, updateProduct } from './data.remote';
+	import { createProduct, deleteProduct, importProductsCsv, updateProduct } from './data.remote';
 
 	type Props = {
 		products: ProductTableProduct[];
@@ -15,6 +20,9 @@
 
 	let { products, payoutPercent }: Props = $props();
 	let rows = $state<EditableProductRow[]>([]);
+	let csvErrors = $state<CsvRowError[]>([]);
+	let csvStatus = $state('');
+	let csvIsImporting = $state(false);
 	let productsKey = $derived(
 		products
 			.map(
@@ -32,6 +40,7 @@
 		minimumFractionDigits: 1,
 		maximumFractionDigits: 1
 	});
+	const templateHref = `data:text/csv;charset=utf-8,${encodeURIComponent(CSV_PRODUCT_TEMPLATE)}`;
 
 	$effect(() => {
 		productsKey;
@@ -103,6 +112,42 @@
 		row.pendingDelete = false;
 	}
 
+	async function handleCsvImport(event: Event) {
+		const input = event.currentTarget as HTMLInputElement;
+		const file = input.files?.[0];
+
+		if (!file) {
+			return;
+		}
+
+		csvErrors = [];
+		csvStatus = '';
+		csvIsImporting = true;
+
+		try {
+			const parsed = parseProductsCsv(await file.text());
+			csvErrors = parsed.errors;
+
+			if (parsed.products.length === 0) {
+				csvStatus = parsed.errors.length
+					? 'Nessuna riga valida da importare.'
+					: 'Il CSV non contiene righe prodotto.';
+				return;
+			}
+
+			const result = await importProductsCsv({ products: parsed.products });
+			rows = result.products.map((product) => createEditableProductRow(product));
+			const invalidSummary =
+				parsed.errors.length > 0 ? ` ${parsed.errors.length} righe non valide.` : '';
+			csvStatus = `Import completato: ${result.created} creati, ${result.updated} aggiornati.${invalidSummary}`;
+		} catch {
+			csvStatus = 'Import non riuscito. Controlla il file CSV e riprova.';
+		} finally {
+			csvIsImporting = false;
+			input.value = '';
+		}
+	}
+
 	function formatCurrency(value: number) {
 		return currencyFormatter.format(value);
 	}
@@ -136,6 +181,27 @@
 			<p class="rounded border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-600">
 				Payout: <span class="font-semibold text-zinc-950">{formatPercent(payoutPercent)}</span>
 			</p>
+			<a
+				class="inline-flex items-center gap-2 rounded border border-zinc-300 bg-white px-4 py-2 text-sm font-semibold text-zinc-800 shadow-sm transition hover:bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-zinc-950 focus:ring-offset-2"
+				href={templateHref}
+				download="margini-template-prodotti.csv"
+			>
+				<span aria-hidden="true">↓</span>
+				<span>Template CSV</span>
+			</a>
+			<label
+				class={`inline-flex cursor-pointer items-center gap-2 rounded border border-zinc-300 bg-white px-4 py-2 text-sm font-semibold text-zinc-800 shadow-sm transition hover:bg-zinc-100 focus-within:ring-2 focus-within:ring-zinc-950 focus-within:ring-offset-2 ${csvIsImporting ? 'pointer-events-none opacity-60' : ''}`}
+			>
+				<span aria-hidden="true">↑</span>
+				<span>{csvIsImporting ? 'Importo CSV' : 'Importa CSV'}</span>
+				<input
+					class="sr-only"
+					type="file"
+					accept=".csv,text/csv"
+					disabled={csvIsImporting}
+					onchange={handleCsvImport}
+				/>
+			</label>
 			<button
 				type="button"
 				class="inline-flex items-center gap-2 rounded bg-zinc-950 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-zinc-950 focus:ring-offset-2"
@@ -146,6 +212,24 @@
 			</button>
 		</div>
 	</div>
+
+	{#if csvStatus || csvErrors.length > 0}
+		<div
+			class="border border-zinc-200 bg-white px-4 py-3 text-sm text-zinc-700 shadow-sm"
+			aria-live="polite"
+		>
+			{#if csvStatus}
+				<p class="font-medium text-zinc-950">{csvStatus}</p>
+			{/if}
+			{#if csvErrors.length > 0}
+				<ul class="mt-2 flex flex-col gap-1 text-red-700">
+					{#each csvErrors as error}
+						<li>Riga {error.row}: {error.message}</li>
+					{/each}
+				</ul>
+			{/if}
+		</div>
+	{/if}
 
 	<div class="overflow-x-auto border border-zinc-200 bg-white shadow-sm">
 		<table class="min-w-[1120px] table-fixed border-collapse text-left text-sm">

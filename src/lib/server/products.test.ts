@@ -10,6 +10,7 @@ import {
 	createProduct,
 	deleteProduct,
 	getSettings,
+	importProducts,
 	listProducts,
 	updateProduct,
 	updateSettings
@@ -115,6 +116,57 @@ describe('product data access', () => {
 		await deleteProduct(db, { id: created.id });
 
 		await expect(listProducts(db)).resolves.toEqual([]);
+	});
+
+	it('imports products by creating new codes and updating existing codes', async () => {
+		await createProduct(db, {
+			code: 'SKU-1',
+			description: 'Original product',
+			category: 'Original',
+			listPrice: 20,
+			supplierPrice: 8,
+			vatRate: 22,
+			discountPercent: 0
+		});
+
+		const result = await importProducts(db, [
+			{
+				code: 'SKU-1',
+				description: 'Updated product',
+				category: 'Updated',
+				listPrice: 25,
+				supplierPrice: 9,
+				vatRate: 10,
+				discountPercent: 3
+			},
+			{
+				code: 'SKU-2',
+				description: 'New product',
+				category: 'New',
+				listPrice: 42,
+				supplierPrice: 18,
+				vatRate: 22,
+				discountPercent: 0
+			}
+		]);
+
+		expect(result).toEqual({ created: 1, updated: 1 });
+		await expect(listProducts(db)).resolves.toMatchObject([
+			{
+				code: 'SKU-2',
+				description: 'New product',
+				category: 'New'
+			},
+			{
+				code: 'SKU-1',
+				description: 'Updated product',
+				category: 'Updated',
+				listPrice: 25,
+				supplierPrice: 9,
+				vatRate: 10,
+				discountPercent: 3
+			}
+		]);
 	});
 });
 

@@ -119,7 +119,7 @@
         "Verify in browser using Codex browser or in-app browser"
       ],
       "priority": 7,
-      "passes": false,
+      "passes": true,
       "notes": ""
     },
     {

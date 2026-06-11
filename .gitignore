@@ -26,10 +26,10 @@ Thumbs.db
 !.env.test
 
 # Prisma
-/dev.db
-/dev.db-journal
-/dev.db-shm
-/dev.db-wal
+dev.db
+dev.db-journal
+dev.db-shm
+dev.db-wal
 /src/generated/prisma/
 
 # Vite

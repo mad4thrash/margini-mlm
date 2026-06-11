@@ -13,6 +13,8 @@ Started: Thu Jun 11 14:12:51 CEST 2026
 - Use `src/lib/margins.ts` as the shared source for product margin calculations so UI display and CSV export stay consistent.
 - Use `src/lib/product-table.ts` for editable product row defaults, row margin projection, and margin tone thresholds that table-adjacent features need to share.
 - Use a small route-level workspace component when sibling controls need to share live page state, such as settings updates that immediately affect product table calculations.
+- Keep CSV template and parsing rules in `src/lib/csv-products.ts` so import, tests, and future export-adjacent behavior share one header definition.
+- When a remote command needs to show local status after refreshing rows, return the refreshed data to the component and update local state there instead of calling query `.set(...)` inside the command.
 ---
 
 ## 2026-06-11 14:23:49 +02:00 - US-001
@@ -85,4 +87,17 @@ Started: Thu Jun 11 14:12:51 CEST 2026
   - Remote query refresh after a settings command can remount UI inside the page await block, so browser verification should prefer durable visible state such as persisted input values and table calculations over transient success text.
   - The in-app Browser target `iab` remained unavailable in this run; headless Chrome with the DevTools protocol worked for local UI verification.
   - Keep settings input validation in shared helpers when the component needs both disabled-state logic and testable invalid-value handling.
+---
+
+## 2026-06-11 15:34:22 +02:00 - US-007
+- Added a CSV product template download with headers for code, description, category, listPrice, supplierPrice, vatRate, and discountPercent.
+- Implemented shared CSV parsing with row-level validation errors, default discountPercent handling, and no payoutPercent column.
+- Added Prisma-backed product import upsert behavior by product code, exposed through a SvelteKit remote command, and wired the product table import control to persist valid rows while reporting invalid ones.
+- Files changed: `.gitignore`, `src/lib/csv-products.ts`, `src/lib/csv-products.test.ts`, `src/lib/server/products.ts`, `src/lib/server/products.test.ts`, `src/routes/ProductTable.svelte`, `src/routes/data.remote.ts`, `prd.json`, `progress.txt`.
+- Quality checks run and results: `npm test` passed with 5 test files and 16 tests; `npm run check` passed with 0 errors and 0 warnings; `npm run build` passed.
+- Browser verification result: in-app Browser target `iab` was unavailable, so local headless Chrome was used against `http://127.0.0.1:5176/`; verified template download filename and headers, confirmed payoutPercent is not in the template, imported a CSV with one valid row plus one invalid row, saw the row-level error `Riga 3: code is required`, verified the valid row persisted, then re-imported the same code and confirmed it updated the existing row. Temporary `AUTO-CSV-*` verification rows were removed from `dev.db`.
+- **Learnings for future iterations:**
+  - Product CSV import should use `code` as the upsert key because the Prisma schema marks it unique.
+  - Table input values are not included in `document.body.innerText`; browser verification for editable rows should read input `value` properties directly.
+  - Query-resource refreshes can clear transient component status, so commands that need durable local feedback can return refreshed data for the component to apply after setting the status/error state.
 ---
