@@ -11,6 +11,7 @@ Started: Thu Jun 11 14:12:51 CEST 2026
 - Keep `.remote.ts` exports limited to remote functions; put reusable helpers, schemas, and Prisma operations in non-remote modules.
 - Validate remote function write inputs with a Standard Schema library such as Valibot before calling Prisma.
 - Use `src/lib/margins.ts` as the shared source for product margin calculations so UI display and CSV export stay consistent.
+- Use `src/lib/product-table.ts` for editable product row defaults, row margin projection, and margin tone thresholds that table-adjacent features need to share.
 ---
 
 ## 2026-06-11 14:23:49 +02:00 - US-001
@@ -58,4 +59,16 @@ Started: Thu Jun 11 14:12:51 CEST 2026
 - **Learnings for future iterations:**
   - Keep all product margin math in `src/lib/margins.ts` and reuse it from future table and CSV features.
   - Guard `marginPercent` with `netRevenue > 0` so zero or invalid revenue produces a stable 0 percent instead of `Infinity` or `NaN`.
+---
+
+## 2026-06-11 15:01:15 +02:00 - US-005
+- Built the operational editable products table on the default route with product fields, reactive margin amount/percent, add-row action, row save, and delete confirmation.
+- Added shared table helper coverage for zero discount defaults, current-payout margin projection, and negative/low/healthy margin tone thresholds.
+- Files changed: `src/lib/product-table.ts`, `src/lib/product-table.test.ts`, `src/routes/+page.svelte`, `src/routes/ProductTable.svelte`, `prd.json`, `progress.txt`.
+- Quality checks run and results: `npm test -- src/lib/product-table.test.ts` first failed on the missing helper and then passed with 3 tests; `npm test` passed with 3 test files and 10 tests; `npm run check` passed with 0 errors and 0 warnings; `npm run build` passed.
+- Browser verification result: in-app Browser target `iab` was unavailable and local Playwright was not installed, so headless Chrome was used against `http://localhost:5174/`; verified hydrated table headers, add product, reactive margin update, save create, edit to negative margin, save update, delete confirmation, and delete. Cleaned one interrupted `AUTO-*` verification row from ignored `dev.db`.
+- **Learnings for future iterations:**
+  - Another local Vite app was already bound to `localhost:5173`, so use an alternate port such as `5174` when verifying this repo if 5173 is occupied.
+  - The table currently reads `payoutPercent` through `getSettings()` but has no settings editor yet; US-006 should add the settings UI and can reuse the current query.
+  - Remote command buttons enter a transient saving state; browser checks should wait for `Salvo` to return to `Salva` before issuing the next row mutation.
 ---
