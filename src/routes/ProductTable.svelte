@@ -244,7 +244,7 @@
 	{/if}
 
 	<div class="overflow-x-auto border border-zinc-200 bg-white shadow-sm">
-		<table class="min-w-[1120px] table-fixed border-collapse text-left text-sm">
+		<table class="min-w-280 table-fixed border-collapse text-left text-sm">
 			<thead class="bg-zinc-100 text-xs uppercase tracking-wide text-zinc-600">
 				<tr>
 					<th class="w-28 px-3 py-3 font-semibold">Codice</th>
