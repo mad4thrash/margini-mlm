@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+	createProductsCsvExport,
 	CSV_PRODUCT_TEMPLATE,
 	parseProductsCsv,
 	type CsvProductInput
@@ -55,5 +56,26 @@ SKU-4,Bad discount,Category,20,8,22,-1`);
 			{ row: 4, message: 'listPrice must be a valid non-negative number' },
 			{ row: 5, message: 'discountPercent must be a valid non-negative number' }
 		]);
+	});
+
+	it('exports visible rows with current values and payout-based margins', () => {
+		const csv = createProductsCsvExport(
+			[
+				{
+					code: 'SKU-1',
+					description: 'Face "serum"',
+					category: 'Viso, premium',
+					listPrice: 122,
+					supplierPrice: 45,
+					vatRate: 22,
+					discountPercent: 10
+				}
+			],
+			5
+		);
+
+		expect(csv).toBe(`code,description,category,listPrice,supplierPrice,vatRate,discountPercent,marginAmount,marginPercent
+SKU-1,"Face ""serum""","Viso, premium",122,45,22,10,39.51,43.90
+`);
 	});
 });

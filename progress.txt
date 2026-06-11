@@ -14,6 +14,7 @@ Started: Thu Jun 11 14:12:51 CEST 2026
 - Use `src/lib/product-table.ts` for editable product row defaults, row margin projection, and margin tone thresholds that table-adjacent features need to share.
 - Use a small route-level workspace component when sibling controls need to share live page state, such as settings updates that immediately affect product table calculations.
 - Keep CSV template and parsing rules in `src/lib/csv-products.ts` so import, tests, and future export-adjacent behavior share one header definition.
+- Keep visible CSV export serialization in `src/lib/csv-products.ts` and calculate export margins through `src/lib/margins.ts` so unsaved UI rows and saved products use the same formulas.
 - When a remote command needs to show local status after refreshing rows, return the refreshed data to the component and update local state there instead of calling query `.set(...)` inside the command.
 ---
 
@@ -100,4 +101,16 @@ Started: Thu Jun 11 14:12:51 CEST 2026
   - Product CSV import should use `code` as the upsert key because the Prisma schema marks it unique.
   - Table input values are not included in `document.body.innerText`; browser verification for editable rows should read input `value` properties directly.
   - Query-resource refreshes can clear transient component status, so commands that need durable local feedback can return refreshed data for the component to apply after setting the status/error state.
+---
+
+## 2026-06-11 15:43:44 +02:00 - US-008
+- Added CSV export for the product rows currently visible in the editable table, including unsaved in-memory edits.
+- Exported calculated `marginAmount` and `marginPercent` using the current payout percentage and the shared margin utility.
+- Files changed: `src/lib/csv-products.ts`, `src/lib/csv-products.test.ts`, `src/routes/ProductTable.svelte`, `prd.json`, `progress.txt`.
+- Quality checks run and results: `npm test -- src/lib/csv-products.test.ts` first failed on the missing export helper and then passed with 4 tests; `npm test` passed with 5 test files and 17 tests; `npm run check` passed with 0 errors and 0 warnings; `npm run build` passed.
+- Browser verification result: in-app Browser target `iab` was unavailable, so local headless Chrome was used against `http://127.0.0.1:5177/`; verified the `Esporta CSV` control, added an unsaved row, edited visible values without saving, decoded the export CSV, and confirmed headers plus the first data row matched the live unsaved values and current 10% payout margin calculation.
+- **Learnings for future iterations:**
+  - Export links can derive a data URI from Svelte 5 `$derived` state so `href` stays synchronized with unsaved table edits.
+  - Browser verification for generated CSV downloads can inspect the anchor `href` data URI directly instead of relying on filesystem download prompts.
+  - When selecting newly added rows in browser checks, wait for a row input rather than only `tbody tr` because an empty-state row can match too early.
 ---

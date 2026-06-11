@@ -7,6 +7,7 @@
 	} from '$lib/product-table';
 	import {
 		CSV_PRODUCT_TEMPLATE,
+		createProductsCsvExport,
 		parseProductsCsv,
 		type CsvRowError
 	} from '$lib/csv-products';
@@ -41,6 +42,9 @@
 		maximumFractionDigits: 1
 	});
 	const templateHref = `data:text/csv;charset=utf-8,${encodeURIComponent(CSV_PRODUCT_TEMPLATE)}`;
+	let exportHref = $derived(
+		`data:text/csv;charset=utf-8,${encodeURIComponent(createProductsCsvExport(rows, payoutPercent))}`
+	);
 
 	$effect(() => {
 		productsKey;
@@ -202,6 +206,14 @@
 					onchange={handleCsvImport}
 				/>
 			</label>
+			<a
+				class="inline-flex items-center gap-2 rounded border border-zinc-300 bg-white px-4 py-2 text-sm font-semibold text-zinc-800 shadow-sm transition hover:bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-zinc-950 focus:ring-offset-2"
+				href={exportHref}
+				download="margini-prodotti-visibili.csv"
+			>
+				<span aria-hidden="true">↗</span>
+				<span>Esporta CSV</span>
+			</a>
 			<button
 				type="button"
 				class="inline-flex items-center gap-2 rounded bg-zinc-950 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-zinc-950 focus:ring-offset-2"

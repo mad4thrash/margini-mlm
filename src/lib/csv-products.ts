@@ -1,3 +1,5 @@
+import { calculateProductMargin } from './margins';
+
 export const CSV_PRODUCT_HEADERS = [
 	'code',
 	'description',
@@ -6,6 +8,12 @@ export const CSV_PRODUCT_HEADERS = [
 	'supplierPrice',
 	'vatRate',
 	'discountPercent'
+] as const;
+
+export const CSV_PRODUCT_EXPORT_HEADERS = [
+	...CSV_PRODUCT_HEADERS,
+	'marginAmount',
+	'marginPercent'
 ] as const;
 
 export const CSV_PRODUCT_TEMPLATE = `${CSV_PRODUCT_HEADERS.join(',')}\n`;
@@ -29,6 +37,30 @@ export type CsvParseResult = {
 	products: CsvProductInput[];
 	errors: CsvRowError[];
 };
+
+export type CsvExportProduct = CsvProductInput;
+
+export function createProductsCsvExport(products: CsvExportProduct[], payoutPercent: number) {
+	const rows = products.map((product) => {
+		const margin = calculateProductMargin({ ...product, payoutPercent });
+
+		return [
+			product.code,
+			product.description,
+			product.category,
+			formatCsvNumber(product.listPrice),
+			formatCsvNumber(product.supplierPrice),
+			formatCsvNumber(product.vatRate),
+			formatCsvNumber(product.discountPercent),
+			margin.marginAmount.toFixed(2),
+			margin.marginPercent.toFixed(2)
+		];
+	});
+
+	return `${CSV_PRODUCT_EXPORT_HEADERS.join(',')}\n${rows
+		.map((row) => row.map(escapeCsvCell).join(','))
+		.join('\n')}${rows.length > 0 ? '\n' : ''}`;
+}
 
 export function parseProductsCsv(csv: string): CsvParseResult {
 	const records = parseCsvRecords(csv);
@@ -114,6 +146,14 @@ function isNonNegativeNumber(value: string) {
 
 	const number = Number(value);
 	return Number.isFinite(number) && number >= 0;
+}
+
+function formatCsvNumber(value: number) {
+	return Number.isFinite(value) ? String(value) : '0';
+}
+
+function escapeCsvCell(value: string) {
+	return /[",\r\n]/.test(value) ? `"${value.replaceAll('"', '""')}"` : value;
 }
 
 function parseCsvRecords(csv: string) {
