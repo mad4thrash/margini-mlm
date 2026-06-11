@@ -10,6 +10,7 @@ Started: Thu Jun 11 14:12:51 CEST 2026
 - Instantiate Prisma 7's generated SQLite client with `@prisma/adapter-better-sqlite3`; a bare `new PrismaClient()` fails at runtime.
 - Keep `.remote.ts` exports limited to remote functions; put reusable helpers, schemas, and Prisma operations in non-remote modules.
 - Validate remote function write inputs with a Standard Schema library such as Valibot before calling Prisma.
+- Use `src/lib/margins.ts` as the shared source for product margin calculations so UI display and CSV export stay consistent.
 ---
 
 ## 2026-06-11 14:23:49 +02:00 - US-001
@@ -46,4 +47,15 @@ Started: Thu Jun 11 14:12:51 CEST 2026
   - Prisma Client for SQLite now needs the `PrismaBetterSqlite3` adapter when instantiated in app or test code.
   - Use `command(schema, handler)` for imperative remote mutations and refresh affected query resources with `.set(...)` after writes.
   - Integration tests can create a temp SQLite file, apply the existing migration SQL, and instantiate a generated Prisma client against that isolated database.
+---
+
+## 2026-06-11 14:45:12 +02:00 - US-004
+- Implemented a shared product margin calculation utility covering discounted gross price, net revenue, payout amount, margin amount, and margin percent.
+- Added Vitest coverage for the required formulas plus zero and invalid net revenue handling.
+- Files changed: `src/lib/margins.ts`, `src/lib/margins.test.ts`, `prd.json`, `progress.txt`.
+- Quality checks run and results: `npm test -- src/lib/margins.test.ts` first failed on the missing utility and then passed with 3 tests; `npm test` passed with 2 test files and 7 tests; `npm run check` passed with 0 errors and 0 warnings; `npm run build` passed.
+- Browser verification result: not relevant; this story only adds a shared calculation utility.
+- **Learnings for future iterations:**
+  - Keep all product margin math in `src/lib/margins.ts` and reuse it from future table and CSV features.
+  - Guard `marginPercent` with `netRevenue > 0` so zero or invalid revenue produces a stable 0 percent instead of `Infinity` or `NaN`.
 ---
