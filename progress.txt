@@ -7,6 +7,9 @@ Started: Thu Jun 11 14:12:51 CEST 2026
 - Remote functions require both `kit.experimental.remoteFunctions: true` and `compilerOptions.experimental.async: true`.
 - Prisma 7 keeps the SQLite datasource URL in `prisma.config.ts`; `schema.prisma` only declares `provider = "sqlite"`.
 - Generate Prisma Client into ignored path `src/generated/prisma` with the `prisma-client` generator, then import from that generated client path in future server-side data access.
+- Instantiate Prisma 7's generated SQLite client with `@prisma/adapter-better-sqlite3`; a bare `new PrismaClient()` fails at runtime.
+- Keep `.remote.ts` exports limited to remote functions; put reusable helpers, schemas, and Prisma operations in non-remote modules.
+- Validate remote function write inputs with a Standard Schema library such as Valibot before calling Prisma.
 ---
 
 ## 2026-06-11 14:23:49 +02:00 - US-001
@@ -30,4 +33,17 @@ Started: Thu Jun 11 14:12:51 CEST 2026
   - The Prisma 7 init flow creates `prisma.config.ts`; use it for datasource URL configuration instead of adding `url = env("DATABASE_URL")` to `schema.prisma`.
   - With `url: "file:./dev.db"` in `prisma.config.ts`, Prisma creates the SQLite database at the repository root, so `/dev.db*` must stay ignored.
   - The generated Prisma Client lives in ignored path `src/generated/prisma`; future server data-access code should run `npx prisma generate` and use that generated path rather than `@prisma/client` directly.
+---
+
+## 2026-06-11 14:40:39 +02:00 - US-003
+- Implemented server-side product and settings data access with Prisma-backed create, update, delete, list, and settings upsert/read operations.
+- Added SvelteKit remote queries for products/settings and remote commands for product mutations and payoutPercent updates, with Valibot input validation before writes.
+- Added a Prisma SQLite runtime adapter and Vitest coverage for product ordering, product mutations, default settings, and persisted payout settings.
+- Files changed: `package.json`, `package-lock.json`, `src/lib/server/db.ts`, `src/lib/server/products.ts`, `src/lib/server/products.test.ts`, `src/routes/data.remote.ts`, `prd.json`, `progress.txt`.
+- Quality checks run and results: `npm test` passed with 1 test file and 4 tests; `npm run check` passed with 0 errors and 0 warnings; `npm run build` passed.
+- Browser verification result: not relevant; this story only adds server-side data access and remote functions.
+- **Learnings for future iterations:**
+  - Prisma Client for SQLite now needs the `PrismaBetterSqlite3` adapter when instantiated in app or test code.
+  - Use `command(schema, handler)` for imperative remote mutations and refresh affected query resources with `.set(...)` after writes.
+  - Integration tests can create a temp SQLite file, apply the existing migration SQL, and instantiate a generated Prisma client against that isolated database.
 ---
