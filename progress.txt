@@ -5,6 +5,8 @@ Started: Thu Jun 11 14:12:51 CEST 2026
 ## Codebase Patterns
 - Keep SvelteKit configuration in `svelte.config.js`; use `vite.config.ts` only to register Vite plugins such as Tailwind and `sveltekit()`.
 - Remote functions require both `kit.experimental.remoteFunctions: true` and `compilerOptions.experimental.async: true`.
+- Prisma 7 keeps the SQLite datasource URL in `prisma.config.ts`; `schema.prisma` only declares `provider = "sqlite"`.
+- Generate Prisma Client into ignored path `src/generated/prisma` with the `prisma-client` generator, then import from that generated client path in future server-side data access.
 ---
 
 ## 2026-06-11 14:23:49 +02:00 - US-001
@@ -17,4 +19,15 @@ Started: Thu Jun 11 14:12:51 CEST 2026
   - The `sv` experimental add-on can select `next` prerelease SvelteKit packages; pin stable SvelteKit dependencies when remote functions are available in stable releases.
   - On Windows, start npm background processes with `npm.cmd`, not `npm`, when using `Start-Process`.
   - `@types/node` is needed for clean `svelte-check` output with the generated SvelteKit TypeScript config.
+---
+
+## 2026-06-11 14:31:38 +02:00 - US-002
+- Added Prisma 7 with SQLite configuration, Product and Settings models, generated Prisma Client, and the initial applied migration.
+- Files changed: `.gitignore`, `package.json`, `package-lock.json`, `prisma.config.ts`, `prisma/schema.prisma`, `prisma/migrations/20260611122959_init/migration.sql`, `prisma/migrations/migration_lock.toml`, `prd.json`, `progress.txt`. Prisma Client was generated locally under ignored path `src/generated/prisma`.
+- Quality checks run and results: `npx prisma format` passed; `npx prisma migrate dev --name init` created and applied the initial migration; `npx prisma generate` passed; `npx prisma validate` passed; `npx prisma migrate status` reported the database schema is up to date; `npm run check` passed with 0 errors and 0 warnings; `npm run build` passed. No lint or test scripts exist yet.
+- Browser verification result: not relevant; this story only changes persistence configuration and schema.
+- **Learnings for future iterations:**
+  - The Prisma 7 init flow creates `prisma.config.ts`; use it for datasource URL configuration instead of adding `url = env("DATABASE_URL")` to `schema.prisma`.
+  - With `url: "file:./dev.db"` in `prisma.config.ts`, Prisma creates the SQLite database at the repository root, so `/dev.db*` must stay ignored.
+  - The generated Prisma Client lives in ignored path `src/generated/prisma`; future server data-access code should run `npx prisma generate` and use that generated path rather than `@prisma/client` directly.
 ---
