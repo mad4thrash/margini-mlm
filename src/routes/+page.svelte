@@ -14,8 +14,8 @@
 	/>
 </svelte:head>
 
-<main class="min-h-screen bg-zinc-50 px-4 py-6 text-zinc-950 sm:px-6 lg:px-8">
-	<div class="mx-auto flex max-w-7xl flex-col gap-5">
+<main class="min-h-screen bg-stone-50 px-3 py-4 text-zinc-950 sm:px-6 lg:px-8">
+	<div class="mx-auto flex max-w-[92rem] flex-col gap-5">
 		{#await Promise.all([productsQuery, settingsQuery])}
 			<p class="border border-zinc-200 bg-white px-4 py-3 text-sm text-zinc-600 shadow-sm">
 				Caricamento prodotti...

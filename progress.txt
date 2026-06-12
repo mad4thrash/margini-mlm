@@ -16,6 +16,7 @@ Started: Thu Jun 11 14:12:51 CEST 2026
 - Keep CSV template and parsing rules in `src/lib/csv-products.ts` so import, tests, and future export-adjacent behavior share one header definition.
 - Keep visible CSV export serialization in `src/lib/csv-products.ts` and calculate export margins through `src/lib/margins.ts` so unsaved UI rows and saved products use the same formulas.
 - When a remote command needs to show local status after refreshing rows, return the refreshed data to the component and update local state there instead of calling query `.set(...)` inside the command.
+- Keep browser verification profiles outside the repository; Vitest also excludes `**/.tmp-*/**` so generated local temp profiles cannot be collected as tests.
 ---
 
 ## 2026-06-11 14:23:49 +02:00 - US-001
@@ -113,4 +114,18 @@ Started: Thu Jun 11 14:12:51 CEST 2026
   - Export links can derive a data URI from Svelte 5 `$derived` state so `href` stays synchronized with unsaved table edits.
   - Browser verification for generated CSV downloads can inspect the anchor `href` data URI directly instead of relying on filesystem download prompts.
   - When selecting newly added rows in browser checks, wait for a row input rather than only `tbody tr` because an empty-state row can match too early.
+---
+
+## 2026-06-12 08:43:18 +02:00 - US-009
+- Polished the operational page layout for responsive use: widened the desktop workspace, tightened settings controls, made product actions stable in a compact toolbar, added a settings shortcut, and introduced stacked mobile product cards below the medium breakpoint.
+- Kept the desktop product table scan-friendly with a fixed table width, bounded scroll area, and sticky headers while preserving the existing editable row workflow.
+- Fixed the margin tone helper to match the intended negative, low, and healthy thresholds covered by the existing test.
+- Added a Vitest exclude for `**/.tmp-*/**` after a generated local Chrome profile inside the workspace was discovered by `npm test`.
+- Files changed: `src/lib/product-table.ts`, `src/routes/+page.svelte`, `src/routes/ProductTable.svelte`, `src/routes/SettingsPanel.svelte`, `vite.config.ts`, `prd.json`, `progress.txt`.
+- Quality checks run and results: `npm test -- src/lib/product-table.test.ts` initially failed on the existing margin-tone threshold mismatch, then passed after the helper fix; `npm test` passed with 5 test files and 17 tests; `npm run check` passed with 0 errors and 0 warnings; `npm run build` passed.
+- Browser verification result: in-app Browser target `iab` was unavailable, so local headless Chrome was used against `http://127.0.0.1:5178/`; verified desktop at 1440x900 shows the operational tool directly, all primary actions, visible table, sticky header, and no control overlaps; verified mobile at 390x844 hides the table, shows stacked product cards, has no horizontal page overflow, all primary actions remain visible, and clicking `Aggiungi prodotto` creates a visible unsaved mobile row.
+- **Learnings for future iterations:**
+  - Do not create Chrome user-data profiles inside the repo for browser checks; Vite can watch the generated cache and Vitest can discover extension `.test.js` files.
+  - Use a temp-directory Chrome profile with extensions disabled for headless verification when the in-app Browser target is unavailable.
+  - Desktop table polish can stay in the table view, but mobile should use a separate stacked row view to avoid squeezed inputs and horizontal page overflow.
 ---

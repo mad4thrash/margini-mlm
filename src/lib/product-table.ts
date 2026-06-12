@@ -56,11 +56,11 @@ export function createEditableProductRow(
 }
 
 export function getMarginTone(marginPercent: number): MarginTone {
-	if (marginPercent < 50) {
+	if (marginPercent < 0) {
 		return "negative";
 	}
 
-	if (marginPercent < 55) {
+	if (marginPercent < 15) {
 		return "low";
 	}
 

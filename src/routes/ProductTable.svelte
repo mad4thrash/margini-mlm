@@ -176,17 +176,24 @@
 </script>
 
 <section class="flex flex-col gap-4">
-	<div class="flex flex-col gap-3 border-b border-zinc-200 pb-4 md:flex-row md:items-end md:justify-between">
-		<div>
+	<div class="flex flex-col gap-3 border-b border-zinc-200 pb-4 lg:flex-row lg:items-end lg:justify-between">
+		<div class="min-w-0">
 			<p class="text-xs font-semibold uppercase tracking-wide text-zinc-500">Prodotti</p>
 			<h1 class="text-2xl font-semibold text-zinc-950">Margini prodotto</h1>
 		</div>
-		<div class="flex flex-wrap items-center gap-2">
-			<p class="rounded border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-600">
+		<div class="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center sm:justify-end">
+			<p class="col-span-2 flex min-h-10 items-center justify-center gap-1 rounded border border-zinc-200 bg-white px-3 text-sm text-zinc-600 sm:col-span-1 sm:justify-start">
 				Payout: <span class="font-semibold text-zinc-950">{formatPercent(payoutPercent)}</span>
 			</p>
 			<a
-				class="inline-flex items-center gap-2 rounded border border-zinc-300 bg-white px-4 py-2 text-sm font-semibold text-zinc-800 shadow-sm transition hover:bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-zinc-950 focus:ring-offset-2"
+				class="inline-flex min-h-10 items-center justify-center gap-2 rounded border border-zinc-300 bg-white px-3 text-sm font-semibold text-zinc-800 shadow-sm transition hover:bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-zinc-950 focus:ring-offset-2"
+				href="#settings"
+			>
+				<span aria-hidden="true">%</span>
+				<span>Impostazioni</span>
+			</a>
+			<a
+				class="inline-flex min-h-10 items-center justify-center gap-2 rounded border border-zinc-300 bg-white px-3 text-sm font-semibold text-zinc-800 shadow-sm transition hover:bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-zinc-950 focus:ring-offset-2"
 				href={templateHref}
 				download="margini-template-prodotti.csv"
 			>
@@ -194,7 +201,7 @@
 				<span>Template CSV</span>
 			</a>
 			<label
-				class={`inline-flex cursor-pointer items-center gap-2 rounded border border-zinc-300 bg-white px-4 py-2 text-sm font-semibold text-zinc-800 shadow-sm transition hover:bg-zinc-100 focus-within:ring-2 focus-within:ring-zinc-950 focus-within:ring-offset-2 ${csvIsImporting ? 'pointer-events-none opacity-60' : ''}`}
+				class={`inline-flex min-h-10 cursor-pointer items-center justify-center gap-2 rounded border border-zinc-300 bg-white px-3 text-sm font-semibold text-zinc-800 shadow-sm transition hover:bg-zinc-100 focus-within:ring-2 focus-within:ring-zinc-950 focus-within:ring-offset-2 ${csvIsImporting ? 'pointer-events-none opacity-60' : ''}`}
 			>
 				<span aria-hidden="true">↑</span>
 				<span>{csvIsImporting ? 'Importo CSV' : 'Importa CSV'}</span>
@@ -207,16 +214,16 @@
 				/>
 			</label>
 			<a
-				class="inline-flex items-center gap-2 rounded border border-zinc-300 bg-white px-4 py-2 text-sm font-semibold text-zinc-800 shadow-sm transition hover:bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-zinc-950 focus:ring-offset-2"
+				class="inline-flex min-h-10 items-center justify-center gap-2 rounded border border-zinc-300 bg-white px-3 text-sm font-semibold text-zinc-800 shadow-sm transition hover:bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-zinc-950 focus:ring-offset-2"
 				href={exportHref}
 				download="margini-prodotti-visibili.csv"
 			>
-				<span aria-hidden="true">↗</span>
+				<span aria-hidden="true">&gt;</span>
 				<span>Esporta CSV</span>
 			</a>
 			<button
 				type="button"
-				class="inline-flex items-center gap-2 rounded bg-zinc-950 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-zinc-950 focus:ring-offset-2"
+				class="col-span-2 inline-flex min-h-10 items-center justify-center gap-2 rounded bg-zinc-950 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-zinc-950 focus:ring-offset-2 sm:col-span-1"
 				onclick={addProduct}
 			>
 				<span aria-hidden="true">+</span>
@@ -243,9 +250,9 @@
 		</div>
 	{/if}
 
-	<div class="overflow-x-auto border border-zinc-200 bg-white shadow-sm">
-		<table class="min-w-280 table-fixed border-collapse text-left text-sm">
-			<thead class="bg-zinc-100 text-xs uppercase tracking-wide text-zinc-600">
+	<div class="hidden overflow-auto border border-zinc-200 bg-white shadow-sm md:block md:max-h-[calc(100vh-15rem)]">
+		<table class="min-w-[76rem] table-fixed border-collapse text-left text-sm">
+			<thead class="sticky top-0 z-10 bg-zinc-100 text-xs uppercase tracking-wide text-zinc-600 shadow-[0_1px_0_0_rgb(228_228_231)]">
 				<tr>
 					<th class="w-28 px-3 py-3 font-semibold">Codice</th>
 					<th class="w-56 px-3 py-3 font-semibold">Descrizione</th>
@@ -384,5 +391,140 @@
 				{/each}
 			</tbody>
 		</table>
+	</div>
+
+	<div class="flex flex-col gap-3 md:hidden">
+		{#if rows.length === 0}
+			<p class="border border-zinc-200 bg-white px-3 py-6 text-center text-sm text-zinc-500 shadow-sm">
+				Nessun prodotto. Aggiungi una riga per iniziare.
+			</p>
+		{/if}
+
+		{#each rows as row (row.clientId)}
+			{@const margin = row.margin(payoutPercent)}
+			<article class="border border-zinc-200 bg-white p-3 shadow-sm">
+				<div class="mb-3 flex items-start justify-between gap-3">
+					<div class="min-w-0">
+						<p class="text-xs font-semibold uppercase tracking-wide text-zinc-500">Prodotto</p>
+						<p class="truncate text-sm font-semibold text-zinc-950">
+							{row.code || 'Nuovo prodotto'}
+						</p>
+					</div>
+					<div class="flex shrink-0 flex-col items-end gap-1 text-xs font-semibold">
+						<span class={`rounded border px-2 py-1 ${toneClass(row)}`}>
+							{formatCurrency(margin.marginAmount)}
+						</span>
+						<span class={`rounded border px-2 py-1 ${toneClass(row)}`}>
+							{formatPercent(margin.marginPercent)}
+						</span>
+					</div>
+				</div>
+
+				<div class="grid gap-3">
+					<label class="flex flex-col gap-1 text-xs font-semibold uppercase tracking-wide text-zinc-500">
+						Codice
+						<input
+							aria-label="Codice prodotto"
+							class="h-10 w-full rounded border border-zinc-300 px-2 text-sm font-normal normal-case tracking-normal text-zinc-950 focus:border-zinc-950 focus:outline-none focus:ring-1 focus:ring-zinc-950"
+							bind:value={row.code}
+						/>
+					</label>
+					<label class="flex flex-col gap-1 text-xs font-semibold uppercase tracking-wide text-zinc-500">
+						Descrizione
+						<input
+							aria-label="Descrizione prodotto"
+							class="h-10 w-full rounded border border-zinc-300 px-2 text-sm font-normal normal-case tracking-normal text-zinc-950 focus:border-zinc-950 focus:outline-none focus:ring-1 focus:ring-zinc-950"
+							bind:value={row.description}
+						/>
+					</label>
+					<label class="flex flex-col gap-1 text-xs font-semibold uppercase tracking-wide text-zinc-500">
+						Categoria
+						<input
+							aria-label="Categoria prodotto"
+							class="h-10 w-full rounded border border-zinc-300 px-2 text-sm font-normal normal-case tracking-normal text-zinc-950 focus:border-zinc-950 focus:outline-none focus:ring-1 focus:ring-zinc-950"
+							bind:value={row.category}
+						/>
+					</label>
+					<div class="grid grid-cols-2 gap-3">
+						<label class="flex flex-col gap-1 text-xs font-semibold uppercase tracking-wide text-zinc-500">
+							Listino
+							<input
+								aria-label="Prezzo di listino"
+								class="h-10 w-full rounded border border-zinc-300 px-2 text-right text-sm font-normal normal-case tracking-normal text-zinc-950 focus:border-zinc-950 focus:outline-none focus:ring-1 focus:ring-zinc-950"
+								type="number"
+								min="0"
+								step="0.01"
+								bind:value={row.listPrice}
+							/>
+						</label>
+						<label class="flex flex-col gap-1 text-xs font-semibold uppercase tracking-wide text-zinc-500">
+							Fornitore
+							<input
+								aria-label="Prezzo fornitore"
+								class="h-10 w-full rounded border border-zinc-300 px-2 text-right text-sm font-normal normal-case tracking-normal text-zinc-950 focus:border-zinc-950 focus:outline-none focus:ring-1 focus:ring-zinc-950"
+								type="number"
+								min="0"
+								step="0.01"
+								bind:value={row.supplierPrice}
+							/>
+						</label>
+						<label class="flex flex-col gap-1 text-xs font-semibold uppercase tracking-wide text-zinc-500">
+							IVA %
+							<input
+								aria-label="Aliquota IVA"
+								class="h-10 w-full rounded border border-zinc-300 px-2 text-right text-sm font-normal normal-case tracking-normal text-zinc-950 focus:border-zinc-950 focus:outline-none focus:ring-1 focus:ring-zinc-950"
+								type="number"
+								min="0"
+								step="0.1"
+								bind:value={row.vatRate}
+							/>
+						</label>
+						<label class="flex flex-col gap-1 text-xs font-semibold uppercase tracking-wide text-zinc-500">
+							Sconto %
+							<input
+								aria-label="Percentuale sconto"
+								class="h-10 w-full rounded border border-zinc-300 px-2 text-right text-sm font-normal normal-case tracking-normal text-zinc-950 focus:border-zinc-950 focus:outline-none focus:ring-1 focus:ring-zinc-950"
+								type="number"
+								min="0"
+								step="0.1"
+								bind:value={row.discountPercent}
+							/>
+						</label>
+					</div>
+				</div>
+
+				<div class="mt-3 grid grid-cols-2 gap-2">
+					<button
+						type="button"
+						class="h-10 rounded border border-zinc-950 bg-zinc-950 px-3 text-sm font-semibold text-white transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-60"
+						disabled={row.isSaving}
+						onclick={() => saveRow(row)}
+					>
+						{row.isSaving ? 'Salvo' : 'Salva'}
+					</button>
+					<button
+						type="button"
+						class="h-10 rounded border border-red-200 bg-white px-3 text-sm font-semibold text-red-700 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+						disabled={row.isSaving}
+						onclick={() => removeRow(row)}
+					>
+						{row.pendingDelete ? 'Conferma' : 'Elimina'}
+					</button>
+					{#if row.pendingDelete}
+						<button
+							type="button"
+							class="col-span-2 h-10 rounded border border-zinc-200 bg-white px-3 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50"
+							onclick={() => cancelDelete(row)}
+						>
+							Annulla eliminazione
+						</button>
+					{/if}
+				</div>
+
+				{#if row.error}
+					<p class="mt-2 text-xs font-medium text-red-700">{row.error}</p>
+				{/if}
+			</article>
+		{/each}
 	</div>
 </section>

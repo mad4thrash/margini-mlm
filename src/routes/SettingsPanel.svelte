@@ -63,13 +63,14 @@
 </script>
 
 <section
+	id="settings"
 	aria-labelledby="settings-title"
-	class="border border-zinc-200 bg-white px-4 py-4 shadow-sm"
+	class="scroll-mt-4 border border-zinc-200 bg-white px-3 py-3 shadow-sm sm:px-4"
 >
-	<div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+	<div class="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
 		<div class="max-w-2xl">
 			<p class="text-xs font-semibold uppercase tracking-wide text-zinc-500">Impostazioni</p>
-			<h2 id="settings-title" class="text-lg font-semibold text-zinc-950">
+			<h2 id="settings-title" class="text-base font-semibold text-zinc-950 sm:text-lg">
 				Payout incaricate alla vendita
 			</h2>
 			<p class="mt-1 text-sm text-zinc-600">
@@ -79,13 +80,13 @@
 			</p>
 		</div>
 
-		<div class="flex flex-col gap-2 sm:flex-row sm:items-start">
-			<label class="flex min-w-52 flex-col gap-1 text-sm font-medium text-zinc-700">
+		<div class="grid gap-2 sm:grid-cols-[12rem_auto] sm:items-start">
+			<label class="flex min-w-0 flex-col gap-1 text-sm font-medium text-zinc-700">
 				<span>Percentuale payout</span>
 				<input
 					aria-label="Percentuale payout"
 					aria-describedby="payout-status"
-					class="rounded border border-zinc-300 px-3 py-2 text-right text-sm text-zinc-950 focus:border-zinc-950 focus:outline-none focus:ring-1 focus:ring-zinc-950"
+					class="h-10 w-full rounded border border-zinc-300 px-3 text-right text-sm text-zinc-950 focus:border-zinc-950 focus:outline-none focus:ring-1 focus:ring-zinc-950"
 					type="number"
 					min="0"
 					step="0.1"
@@ -95,7 +96,7 @@
 			</label>
 			<button
 				type="button"
-				class="mt-6 rounded border border-zinc-950 bg-zinc-950 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-60 sm:mt-6"
+				class="h-10 rounded border border-zinc-950 bg-zinc-950 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-60 sm:mt-6"
 				disabled={!canSave}
 				onclick={saveSettings}
 			>
