@@ -129,3 +129,15 @@ Started: Thu Jun 11 14:12:51 CEST 2026
   - Use a temp-directory Chrome profile with extensions disabled for headless verification when the in-app Browser target is unavailable.
   - Desktop table polish can stay in the table view, but mobile should use a separate stacked row view to avoid squeezed inputs and horizontal page overflow.
 ---
+
+## 2026-06-12 08:48:56 +02:00 - US-010
+- Replaced the starter Svelte README with bilingual Italian and English documentation for Margini.
+- Documented setup, development, database initialization, local SQLite git-ignore expectations, CSV import template, CSV export behavior, payout settings, and the margin formula.
+- Added an MIT `LICENSE` file with the original git author copyright notice.
+- Files changed: `README.md`, `LICENSE`, `prd.json`, `progress.txt`.
+- Quality checks run and results: `npm test` passed with 5 test files and 17 tests; `npm run check` passed with 0 errors and 0 warnings; `npm run build` passed.
+- Browser verification result: not relevant; this story only changes project documentation and licensing.
+- **Learnings for future iterations:**
+  - The repository's original git author is `mad4thrash <fabio.plumeri@oisluxurygroup.com>`; the MIT copyright notice uses `mad4thrash`.
+  - Documentation changes still need the full project quality checks before marking the Ralph story passing.
+---
