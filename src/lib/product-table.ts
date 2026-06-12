@@ -1,6 +1,6 @@
-import { calculateProductMargin, type ProductMargin } from './margins';
+import { calculateProductMargin, type ProductMargin } from "./margins";
 
-export type MarginTone = 'negative' | 'low' | 'healthy';
+export type MarginTone = "negative" | "low" | "healthy";
 
 export type ProductTableProduct = {
 	id?: number;
@@ -32,7 +32,9 @@ export type EditableProductRow = {
 
 let nextClientId = 1;
 
-export function createEditableProductRow(product: ProductTableProduct = createBlankProduct()) {
+export function createEditableProductRow(
+	product: ProductTableProduct = createBlankProduct(),
+) {
 	return {
 		...product,
 		clientId: product.id ? `product-${product.id}` : `new-${nextClientId++}`,
@@ -40,39 +42,39 @@ export function createEditableProductRow(product: ProductTableProduct = createBl
 		isNew: product.id === undefined,
 		isSaving: false,
 		pendingDelete: false,
-		error: '',
+		error: "",
 		margin(payoutPercent: number) {
 			return calculateProductMargin({
 				listPrice: this.listPrice,
 				supplierPrice: this.supplierPrice,
 				vatRate: this.vatRate,
 				discountPercent: this.discountPercent,
-				payoutPercent
+				payoutPercent,
 			});
-		}
+		},
 	} satisfies EditableProductRow;
 }
 
 export function getMarginTone(marginPercent: number): MarginTone {
-	if (marginPercent < 0) {
-		return 'negative';
+	if (marginPercent < 50) {
+		return "negative";
 	}
 
-	if (marginPercent < 15) {
-		return 'low';
+	if (marginPercent < 55) {
+		return "low";
 	}
 
-	return 'healthy';
+	return "healthy";
 }
 
 function createBlankProduct(): ProductTableProduct {
 	return {
-		code: '',
-		description: '',
-		category: '',
+		code: "",
+		description: "",
+		category: "",
 		listPrice: 0,
 		supplierPrice: 0,
 		vatRate: 22,
-		discountPercent: 0
+		discountPercent: 0,
 	};
 }
