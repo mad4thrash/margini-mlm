@@ -1,8 +1,8 @@
-# Margini
+# Margini-mlm
 
 ## Italiano
 
-Margini e un'app browser-first per aziende che vendono prodotti attraverso network marketing. Consente di gestire un elenco prodotti, applicare lo sconto al prezzo di listino, sottrarre IVA, costo fornitore e payout per incaricate alla vendita, e confrontare margine netto e percentuale in tempo reale.
+Margini-mlm e un'app browser-first per aziende che vendono prodotti attraverso network marketing. Consente di gestire un elenco prodotti, applicare lo sconto al prezzo di listino, sottrarre IVA, costo fornitore e payout per incaricate alla vendita, e confrontare margine netto e percentuale in tempo reale.
 
 Il progetto e open source ed e distribuito con licenza MIT. Vedi [LICENSE](LICENSE).
 
