@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest';
 
 import {
+	createSimulationScenarioResults,
 	createDefaultScenarioSelection,
 	toggleScenarioSelection,
 	toSimulationProducts
@@ -47,5 +48,40 @@ describe('simulation panel helpers', () => {
 				discountPercent: 0
 			}
 		]);
+	});
+
+	test('builds aggregate results for selected scenarios', () => {
+		const results = createSimulationScenarioResults({
+			products: [
+				{
+					code: 'SKU-1',
+					listPrice: 122,
+					supplierPrice: 40,
+					vatRate: 22,
+					discountPercent: 0,
+					category: ''
+				},
+				{
+					code: 'SKU-2',
+					listPrice: 61,
+					supplierPrice: 20,
+					vatRate: 22,
+					discountPercent: 0,
+					category: ''
+				}
+			],
+			scenarios: [PROMOTION_SCENARIOS[0], PROMOTION_SCENARIOS[1]],
+			payoutPercent: 0,
+			simulationRun: 1,
+			orderCount: 3
+		});
+
+		expect(results).toHaveLength(2);
+		expect(results[0].scenario.name).toBe('DB/base');
+		expect(results[0].orderCount).toBe(3);
+		expect(results[0].productCount).toBeGreaterThanOrEqual(3);
+		expect(results[0].totals.grossRevenue).toBeGreaterThan(0);
+		expect(results[0].marginTone).toBe('healthy');
+		expect(results[1].totals.grossRevenue).toBeLessThan(results[0].totals.grossRevenue);
 	});
 });

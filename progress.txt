@@ -6,6 +6,7 @@
 - Use `generateComparableSimulationOrders` when multiple simulation options need like-for-like order inputs; it clones one seeded order set per option.
 - Use `PROMOTION_SCENARIOS` as the source of truth for available commercial scenarios and pass those objects into `calculatePromotionScenarioTotals`.
 - Use `createDefaultScenarioSelection`, `toggleScenarioSelection`, and `toSimulationProducts` from `src/lib/simulation-panel.ts` for simulation panel state and product mapping.
+- Use `createSimulationScenarioResults` from `src/lib/simulation-panel.ts` for aggregated scenario rows; it reuses one seeded order set per order mode so comparable scenarios share products and quantities.
 
 Started: Thu Jun 18 10:31:40 CEST 2026
 ---
@@ -60,4 +61,17 @@ Started: Thu Jun 18 10:31:40 CEST 2026
   - `SimulationOptionsPanel.svelte` intentionally owns only option selection and rerun state; aggregated financial result display is still left for a later story.
   - Keep reusable simulation UI state in `src/lib/simulation-panel.ts` so it can be unit-tested without component-test infrastructure.
   - Browser verification may need a fallback isolated Chromium debugging session when the in-app browser endpoint is not registered and the MCP browser profile is locked.
+---
+
+## 2026-06-18 11:13:46 +02:00 - US-005
+- Implemented aggregated simulation result calculation for selected scenarios, including order count, product count, gross revenue, margin amount, margin percent, and margin tone.
+- Rendered desktop table and mobile cards in the simulation panel with Italian EUR and percent formatting plus negative, low, and healthy margin color treatments.
+- Passed the current payout percentage into the simulation panel so aggregate margin totals match the saved settings.
+- Files changed: `src/lib/simulation-panel.ts`, `src/routes/SimulationOptionsPanel.svelte`, `src/routes/ProductWorkspace.svelte`, `tests/lib/simulation-panel.test.ts`, `prd.json`, `progress.txt`.
+- Quality checks run and results: `npm test -- tests/lib/simulation-panel.test.ts` failed first with missing `createSimulationScenarioResults`, then passed with 4 tests; `npm run check` passed with 0 errors and 0 warnings; `npm test` passed with 7 files and 32 tests; `npm run build` passed.
+- Browser verification result: verified against `http://127.0.0.1:5192` with isolated headless Chromium after the in-app browser endpoint was unavailable and the MCP browser profile was locked. Desktop rendered 9 scenario rows with Italian currency and percent formatting. Mobile rendered 9 cards, hid the desktop table, and had no horizontal overflow at 390px width. Unchecking `DB/base` reduced rows to 8 and removed its result; clicking `Rilancia simulazione` advanced the launch to `#2` and changed generated totals.
+- **Learnings for future iterations:**
+  - Aggregated result display should stay in `SimulationOptionsPanel.svelte`, while result construction belongs in `src/lib/simulation-panel.ts` for unit coverage.
+  - `createSimulationScenarioResults` accepts an optional small `orderCount` for deterministic focused tests while the UI uses the generator default of 1000 orders.
+  - Scenario result views need the current `payoutPercent`; route-level wiring should pass it anywhere aggregate margins are displayed.
 ---

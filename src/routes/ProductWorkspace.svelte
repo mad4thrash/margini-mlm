@@ -28,6 +28,6 @@
 
 <div class="flex flex-col gap-4">
 	<SettingsPanel payoutPercent={payoutPercent} onPayoutSaved={handlePayoutSaved} />
-	<SimulationOptionsPanel {products} />
+	<SimulationOptionsPanel {products} {payoutPercent} />
 	<ProductTable {products} {payoutPercent} />
 </div>
