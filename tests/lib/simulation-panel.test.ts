@@ -6,7 +6,16 @@ import {
 	toggleScenarioSelection,
 	toSimulationProducts
 } from '../../src/lib/simulation-panel';
-import { PROMOTION_SCENARIOS } from '../../src/lib/simulation';
+import { PROMOTION_SCENARIOS, type SimulationProduct } from '../../src/lib/simulation';
+
+const simulationProducts: SimulationProduct[] = Array.from({ length: 10 }, (_, index) => ({
+	code: `SKU-${index + 1}`,
+	listPrice: 50 + index * 10,
+	supplierPrice: 15 + index,
+	vatRate: 22,
+	discountPercent: 0,
+	category: index === 0 ? 'KIT' : ''
+}));
 
 describe('simulation panel helpers', () => {
 	test('selects every promotion scenario by default', () => {
@@ -83,5 +92,56 @@ describe('simulation panel helpers', () => {
 		expect(results[0].totals.grossRevenue).toBeGreaterThan(0);
 		expect(results[0].marginTone).toBe('healthy');
 		expect(results[1].totals.grossRevenue).toBeLessThan(results[0].totals.grossRevenue);
+	});
+
+	test('uses the same product count for every active scenario in a launch', () => {
+		const results = createSimulationScenarioResults({
+			products: simulationProducts,
+			scenarios: PROMOTION_SCENARIOS,
+			payoutPercent: 0,
+			simulationRun: 1,
+			orderCount: 100
+		});
+		const productCounts = new Set(results.map((result) => result.productCount));
+
+		expect(results).toHaveLength(PROMOTION_SCENARIOS.length);
+		expect(productCounts.size).toBe(1);
+	});
+
+	test('reuses one order set for percentage and bundle scenarios', () => {
+		const results = createSimulationScenarioResults({
+			products: simulationProducts,
+			scenarios: [PROMOTION_SCENARIOS[0], PROMOTION_SCENARIOS[5], PROMOTION_SCENARIOS[6]],
+			payoutPercent: 0,
+			simulationRun: 2,
+			orderCount: 100
+		});
+		const [base, threeForTwo, fourForThree] = results;
+
+		expect(threeForTwo.productCount).toBe(base.productCount);
+		expect(fourForThree.productCount).toBe(base.productCount);
+		expect(threeForTwo.totals.grossRevenue).toBeLessThan(base.totals.grossRevenue);
+		expect(fourForThree.totals.grossRevenue).toBeLessThan(base.totals.grossRevenue);
+	});
+
+	test('reruns change generated orders while keeping scenarios comparable', () => {
+		const firstRun = createSimulationScenarioResults({
+			products: simulationProducts,
+			scenarios: [PROMOTION_SCENARIOS[0], PROMOTION_SCENARIOS[5]],
+			payoutPercent: 0,
+			simulationRun: 1,
+			orderCount: 100
+		});
+		const secondRun = createSimulationScenarioResults({
+			products: simulationProducts,
+			scenarios: [PROMOTION_SCENARIOS[0], PROMOTION_SCENARIOS[5]],
+			payoutPercent: 0,
+			simulationRun: 2,
+			orderCount: 100
+		});
+
+		expect(firstRun[0].productCount).toBe(firstRun[1].productCount);
+		expect(secondRun[0].productCount).toBe(secondRun[1].productCount);
+		expect(secondRun[0].totals.grossRevenue).not.toBe(firstRun[0].totals.grossRevenue);
 	});
 });

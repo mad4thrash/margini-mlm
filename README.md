@@ -74,9 +74,9 @@ La sezione `Impostazioni` salva la percentuale payout per le incaricate alla ven
 
 ### Simulazioni ordini e promozioni
 
-La sezione `Simulazioni` usa i prodotti salvati per generare ordini casuali e confrontare scenari commerciali selezionabili. Tutti gli scenari sono attivi di default e possono essere esclusi con checkbox; `Rilancia simulazione` rigenera gli ordini mantenendo il confronto sugli stessi dati per gli scenari selezionati.
+La sezione `Simulazioni` usa i prodotti salvati per generare ordini casuali e confrontare scenari commerciali selezionabili. Tutti gli scenari sono attivi di default e possono essere esclusi con checkbox; `Rilancia simulazione` rigenera un unico set di ordini e lo riusa per tutti gli scenari selezionati.
 
-Gli scenari includono DB/base, sconti 10%, 20%, 25% e 30%, 3x2, 4x3, 3x2 no KIT e 4x3 no KIT. Le simulazioni generiche usano almeno 1000 ordini con 1-8 righe prodotto e quantita 1-4 per riga. Le simulazioni 3x2 generano ordini con esattamente 3 o 6 prodotti; le simulazioni 4x3 generano ordini con esattamente 4 o 8 prodotti. Negli scenari no KIT, la categoria `KIT` e esclusa dal conteggio del bundle e riceve lo sconto DB piu 20%.
+Gli scenari includono DB/base, sconti 10%, 20%, 25% e 30%, 3x2, 4x3, 3x2 no KIT e 4x3 no KIT. Ogni lancio usa almeno 1000 ordini: 5% con 1 prodotto, 47,5% con multipli di 3 scelti tra 3, 6, 9 e 12 prodotti, e 47,5% con multipli di 4 scelti tra 4, 8 e 12 prodotti. Ogni ordine ha al massimo 12 prodotti. Negli scenari no KIT, la categoria `KIT` e esclusa dal conteggio del bundle e riceve lo sconto DB piu 20%.
 
 ### Formula margine
 
@@ -162,9 +162,9 @@ The `Impostazioni` section saves the payout percentage for sales representatives
 
 ### Order and Promotion Simulations
 
-The `Simulazioni` section uses saved products to generate random orders and compare selectable commercial scenarios. All scenarios are active by default and can be removed with checkboxes; `Rilancia simulazione` regenerates the orders while keeping selected scenarios comparable against the same generated inputs.
+The `Simulazioni` section uses saved products to generate random orders and compare selectable commercial scenarios. All scenarios are active by default and can be removed with checkboxes; `Rilancia simulazione` regenerates one order set and reuses it for every selected scenario.
 
-Scenarios include DB/base, 10%, 20%, 25%, and 30% discounts, 3x2, 4x3, 3x2 no KIT, and 4x3 no KIT. Generic simulations use at least 1000 orders with 1-8 product lines and quantity 1-4 per line. 3x2 simulations generate orders with exactly 3 or 6 products; 4x3 simulations generate orders with exactly 4 or 8 products. In no-KIT scenarios, category `KIT` is excluded from bundle counting and receives the DB discount plus 20%.
+Scenarios include DB/base, 10%, 20%, 25%, and 30% discounts, 3x2, 4x3, 3x2 no KIT, and 4x3 no KIT. Each run uses at least 1000 orders: 5% with 1 product, 47.5% with multiples of 3 chosen from 3, 6, 9, and 12 products, and 47.5% with multiples of 4 chosen from 4, 8, and 12 products. Each order has at most 12 products. In no-KIT scenarios, category `KIT` is excluded from bundle counting and receives the DB discount plus 20%.
 
 ### Margin Formula
 

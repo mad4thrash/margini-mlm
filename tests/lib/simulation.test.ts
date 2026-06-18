@@ -151,20 +151,31 @@ describe('promotion scenarios', () => {
 });
 
 describe('generateRandomOrders', () => {
-	test('generates at least 1000 generic orders with bounded lines and quantities', () => {
+	test('generates at least 1000 realistic generic orders with weighted bundle-friendly sizes', () => {
 		const orders = generateRandomOrders({ products, seed: 'generic-orders' });
+		const allowedUnitCounts = new Set([1, 3, 4, 6, 8, 9, 12]);
+		const unitCounts = new Set(orders.map(countOrderUnits));
 
 		expect(orders.length).toBeGreaterThanOrEqual(1000);
+		expect(unitCounts.has(1)).toBe(true);
+
 		for (const order of orders) {
 			expect(order.length).toBeGreaterThanOrEqual(1);
-			expect(order.length).toBeLessThanOrEqual(8);
+			expect(countOrderUnits(order)).toBeLessThanOrEqual(12);
+			expect(allowedUnitCounts.has(countOrderUnits(order))).toBe(true);
 
 			for (const line of order) {
 				expect(products).toContain(line.product);
 				expect(line.quantity).toBeGreaterThanOrEqual(1);
-				expect(line.quantity).toBeLessThanOrEqual(4);
 			}
 		}
+	});
+
+	test('uses five percent single-product generic orders', () => {
+		const orders = generateRandomOrders({ products, orderCount: 1000, seed: 'single-share' });
+		const singleProductOrders = orders.filter((order) => countOrderUnits(order) === 1);
+
+		expect(singleProductOrders).toHaveLength(50);
 	});
 
 	test('generates 3x2 orders with exactly 3 or 6 product units', () => {

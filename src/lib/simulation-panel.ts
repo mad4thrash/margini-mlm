@@ -5,7 +5,6 @@ import {
 	PROMOTION_SCENARIOS,
 	type PromotionScenario,
 	type PromotionScenarioId,
-	type SimulationLine,
 	type SimulationProduct,
 	type SimulationTotals
 } from './simulation';
@@ -61,20 +60,18 @@ export function createSimulationScenarioResults(
 	input: CreateSimulationScenarioResultsInput
 ): SimulationScenarioResult[] {
 	const { products, scenarios, payoutPercent, simulationRun, orderCount } = input;
-	const ordersByMode = new Map<string, SimulationLine[][]>();
 
-	if (products.length === 0) {
+	if (products.length === 0 || scenarios.length === 0) {
 		return [];
 	}
 
+	const orders = generateRandomOrders({
+		products,
+		orderCount,
+		seed: `${simulationRun}:orders`
+	});
+
 	return scenarios.map((scenario) => {
-		const orders = getOrdersForMode({
-			ordersByMode,
-			products,
-			scenario,
-			simulationRun,
-			orderCount
-		});
 		const totals = calculatePromotionScenarioTotals({
 			scenario,
 			orders,
@@ -91,33 +88,7 @@ export function createSimulationScenarioResults(
 	});
 }
 
-function getOrdersForMode(input: {
-	ordersByMode: Map<string, SimulationLine[][]>;
-	products: SimulationProduct[];
-	scenario: PromotionScenario;
-	simulationRun: number;
-	orderCount?: number;
-}): SimulationLine[][] {
-	const { ordersByMode, products, scenario, simulationRun, orderCount } = input;
-	const cacheKey = scenario.orderMode;
-	const cachedOrders = ordersByMode.get(cacheKey);
-
-	if (cachedOrders) {
-		return cachedOrders;
-	}
-
-	const orders = generateRandomOrders({
-		products,
-		mode: scenario.orderMode,
-		orderCount,
-		seed: `${simulationRun}:${scenario.orderMode}`
-	});
-
-	ordersByMode.set(cacheKey, orders);
-	return orders;
-}
-
-function countProductsInOrders(orders: SimulationLine[][]): number {
+function countProductsInOrders(orders: { quantity: number }[][]): number {
 	return orders.reduce(
 		(total, order) => total + order.reduce((orderTotal, line) => orderTotal + line.quantity, 0),
 		0

@@ -31,6 +31,8 @@ export type SimulationTotals = {
 
 export type SimulationOrderMode = 'generic' | '3x2' | '4x3';
 
+type GenericOrderKind = 'single' | 'multiples-of-3' | 'multiples-of-4';
+
 export type GenerateRandomOrdersInput = {
 	products: SimulationProduct[];
 	mode?: SimulationOrderMode;
@@ -177,17 +179,13 @@ export function generateRandomOrders(input: GenerateRandomOrdersInput): Simulati
 		return [];
 	}
 
-	return Array.from({ length: orderCount }, () => {
-		if (mode === '3x2') {
-			return generateBundleOrder(products, random, 3);
-		}
+	if (mode === 'generic') {
+		return generateGenericOrders(products, random, orderCount);
+	}
 
-		if (mode === '4x3') {
-			return generateBundleOrder(products, random, 4);
-		}
-
-		return generateGenericOrder(products, random);
-	});
+	return Array.from({ length: orderCount }, () =>
+		generateBundleOrder(products, random, mode === '3x2' ? 3 : 4)
+	);
 }
 
 export function generateComparableSimulationOrders(
@@ -268,17 +266,47 @@ function isKitProduct(product: SimulationProduct): boolean {
 	return product.category?.trim().toLocaleLowerCase() === 'kit';
 }
 
-function generateGenericOrder(
+function generateGenericOrders(
 	products: SimulationProduct[],
-	random: () => number
-): SimulationLine[] {
-	const lineCount = randomInteger(random, 1, Math.min(8, products.length));
-	const selectedProducts = takeRandomProducts(products, lineCount, random);
+	random: () => number,
+	orderCount: number
+): SimulationLine[][] {
+	const orderKinds = shuffledGenericOrderKinds(orderCount, random);
 
-	return selectedProducts.map((product) => ({
-		product,
-		quantity: randomInteger(random, 1, 4)
-	}));
+	return orderKinds.map((orderKind) =>
+		generateOrderWithUnitCount(products, random, genericOrderUnitCount(orderKind, random))
+	);
+}
+
+function shuffledGenericOrderKinds(orderCount: number, random: () => number): GenericOrderKind[] {
+	const singleCount = Math.round(orderCount * 0.05);
+	const remainingCount = orderCount - singleCount;
+	const multiplesOfThreeCount = Math.floor(remainingCount / 2);
+	const multiplesOfFourCount = remainingCount - multiplesOfThreeCount;
+	const orderKinds: GenericOrderKind[] = [
+		...Array<GenericOrderKind>(singleCount).fill('single'),
+		...Array<GenericOrderKind>(multiplesOfThreeCount).fill('multiples-of-3'),
+		...Array<GenericOrderKind>(multiplesOfFourCount).fill('multiples-of-4')
+	];
+
+	for (let index = orderKinds.length - 1; index > 0; index -= 1) {
+		const swapIndex = randomInteger(random, 0, index);
+		[orderKinds[index], orderKinds[swapIndex]] = [orderKinds[swapIndex], orderKinds[index]];
+	}
+
+	return orderKinds;
+}
+
+function genericOrderUnitCount(orderKind: GenericOrderKind, random: () => number): number {
+	if (orderKind === 'single') {
+		return 1;
+	}
+
+	if (orderKind === 'multiples-of-3') {
+		return randomChoice([3, 6, 9, 12], random);
+	}
+
+	return randomChoice([4, 8, 12], random);
 }
 
 function generateBundleOrder(
@@ -287,6 +315,15 @@ function generateBundleOrder(
 	groupSize: 3 | 4
 ): SimulationLine[] {
 	const totalUnits = randomInteger(random, 1, 2) * groupSize;
+
+	return generateOrderWithUnitCount(products, random, totalUnits);
+}
+
+function generateOrderWithUnitCount(
+	products: SimulationProduct[],
+	random: () => number,
+	totalUnits: number
+): SimulationLine[] {
 	const lines = new Map<string, SimulationLine>();
 
 	for (let unit = 0; unit < totalUnits; unit += 1) {
@@ -303,21 +340,8 @@ function generateBundleOrder(
 	return Array.from(lines.values());
 }
 
-function takeRandomProducts(
-	products: SimulationProduct[],
-	count: number,
-	random: () => number
-): SimulationProduct[] {
-	const pool = [...products];
-	const selected: SimulationProduct[] = [];
-
-	for (let index = 0; index < count; index += 1) {
-		const poolIndex = randomInteger(random, 0, pool.length - 1);
-		const [product] = pool.splice(poolIndex, 1);
-		selected.push(product);
-	}
-
-	return selected;
+function randomChoice<T>(options: T[], random: () => number): T {
+	return options[randomInteger(random, 0, options.length - 1)];
 }
 
 function createRandom(seed: string | number | undefined): () => number {
