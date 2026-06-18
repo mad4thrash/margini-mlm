@@ -96,7 +96,7 @@
 			</label>
 			<button
 				type="button"
-				class="h-10 rounded border border-zinc-950 bg-zinc-950 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-60 sm:mt-6"
+				class="h-10 cursor-pointer rounded border border-zinc-950 bg-zinc-950 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-60 sm:mt-6"
 				disabled={!canSave}
 				onclick={saveSettings}
 			>

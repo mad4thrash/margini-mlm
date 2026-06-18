@@ -187,7 +187,7 @@
 			</p>
 
 			<a
-				class="inline-flex min-h-10 items-center justify-center gap-2 rounded border border-zinc-300 bg-white px-3 text-sm font-semibold text-zinc-800 shadow-sm transition hover:bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-zinc-950 focus:ring-offset-2"
+				class="inline-flex min-h-10 cursor-pointer items-center justify-center gap-2 rounded border border-zinc-300 bg-white px-3 text-sm font-semibold text-zinc-800 shadow-sm transition hover:bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-zinc-950 focus:ring-offset-2"
 				href={templateHref}
 				download="margini-template-prodotti.csv"
 			>
@@ -208,7 +208,7 @@
 				/>
 			</label>
 			<a
-				class="inline-flex min-h-10 items-center justify-center gap-2 rounded border border-zinc-300 bg-white px-3 text-sm font-semibold text-zinc-800 shadow-sm transition hover:bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-zinc-950 focus:ring-offset-2"
+				class="inline-flex min-h-10 cursor-pointer items-center justify-center gap-2 rounded border border-zinc-300 bg-white px-3 text-sm font-semibold text-zinc-800 shadow-sm transition hover:bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-zinc-950 focus:ring-offset-2"
 				href={exportHref}
 				download="margini-prodotti-visibili.csv"
 			>
@@ -217,7 +217,7 @@
 			</a>
 			<button
 				type="button"
-				class="col-span-2 inline-flex min-h-10 items-center justify-center gap-2 rounded bg-zinc-950 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-zinc-950 focus:ring-offset-2 sm:col-span-1"
+				class="col-span-2 inline-flex min-h-10 cursor-pointer items-center justify-center gap-2 rounded bg-zinc-950 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-zinc-950 focus:ring-offset-2 sm:col-span-1"
 				onclick={addProduct}
 			>
 				<span aria-hidden="true">+</span>
@@ -352,7 +352,7 @@
 								<div class="flex gap-2">
 									<button
 										type="button"
-										class="rounded border border-zinc-950 bg-zinc-950 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-60"
+										class="cursor-pointer rounded border border-zinc-950 bg-zinc-950 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-60"
 										disabled={row.isSaving}
 										onclick={() => saveRow(row)}
 									>
@@ -360,7 +360,7 @@
 									</button>
 									<button
 										type="button"
-										class="rounded border border-red-200 bg-white px-3 py-1.5 text-xs font-semibold text-red-700 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+										class="cursor-pointer rounded border border-red-200 bg-white px-3 py-1.5 text-xs font-semibold text-red-700 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
 										disabled={row.isSaving}
 										onclick={() => removeRow(row)}
 									>
@@ -369,7 +369,7 @@
 									{#if row.pendingDelete}
 										<button
 											type="button"
-											class="rounded border border-zinc-200 bg-white px-3 py-1.5 text-xs font-semibold text-zinc-700 transition hover:bg-zinc-50"
+											class="cursor-pointer rounded border border-zinc-200 bg-white px-3 py-1.5 text-xs font-semibold text-zinc-700 transition hover:bg-zinc-50"
 											onclick={() => cancelDelete(row)}
 										>
 											Annulla
@@ -490,7 +490,7 @@
 				<div class="mt-3 grid grid-cols-2 gap-2">
 					<button
 						type="button"
-						class="h-10 rounded border border-zinc-950 bg-zinc-950 px-3 text-sm font-semibold text-white transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-60"
+						class="h-10 cursor-pointer rounded border border-zinc-950 bg-zinc-950 px-3 text-sm font-semibold text-white transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-60"
 						disabled={row.isSaving}
 						onclick={() => saveRow(row)}
 					>
@@ -498,7 +498,7 @@
 					</button>
 					<button
 						type="button"
-						class="h-10 rounded border border-red-200 bg-white px-3 text-sm font-semibold text-red-700 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+						class="h-10 cursor-pointer rounded border border-red-200 bg-white px-3 text-sm font-semibold text-red-700 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
 						disabled={row.isSaving}
 						onclick={() => removeRow(row)}
 					>
@@ -507,7 +507,7 @@
 					{#if row.pendingDelete}
 						<button
 							type="button"
-							class="col-span-2 h-10 rounded border border-zinc-200 bg-white px-3 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50"
+							class="col-span-2 h-10 cursor-pointer rounded border border-zinc-200 bg-white px-3 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50"
 							onclick={() => cancelDelete(row)}
 						>
 							Annulla eliminazione

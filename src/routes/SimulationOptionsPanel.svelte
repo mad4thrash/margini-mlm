@@ -19,7 +19,7 @@
 
 	let { products, payoutPercent }: Props = $props();
 	let selectedScenarioIds = $state<PromotionScenarioId[]>(createDefaultScenarioSelection());
-	let experimentRun = $state(1);
+	let experimentRun = $state(0);
 	let scenarioResults = $state<SimulationScenarioResult[]>([]);
 	let isSimulationLoading = $state(false);
 	let completedLaunches = $state(0);
@@ -33,6 +33,9 @@
 	let simulationJobId = 0;
 	let simulationProgress = $derived(
 		launchCount > 0 ? Math.round((completedLaunches / launchCount) * 100) : 0
+	);
+	let experimentLabel = $derived(
+		isSimulationLoading || scenarioResults.length > 0 ? `#${experimentRun}` : 'non lanciato'
 	);
 
 	const numberFormatter = new Intl.NumberFormat('it-IT');
@@ -54,34 +57,25 @@
 	}
 
 	function rerunSimulation() {
-		experimentRun += 1;
-	}
-
-	$effect(() => {
-		const productsForSimulation = simulationProducts;
-		const scenariosForSimulation = selectedScenarios;
-		const payoutForSimulation = payoutPercent;
-		const experimentForSimulation = experimentRun;
-		const jobId = untrack(() => simulationJobId + 1);
-		simulationJobId = jobId;
-
-		if (productsForSimulation.length === 0 || scenariosForSimulation.length === 0) {
-			scenarioResults = [];
-			isSimulationLoading = false;
-			completedLaunches = 0;
+		if (simulationProducts.length === 0 || selectedScenarios.length === 0 || isSimulationLoading) {
 			return;
 		}
 
-		isSimulationLoading = true;
-		completedLaunches = 0;
-		scenarioResults = [];
-		void runSimulationJob({
-			jobId,
-			products: productsForSimulation,
-			scenarios: scenariosForSimulation,
-			payoutPercent: payoutForSimulation,
-			experimentRun: experimentForSimulation
+		const nextExperimentRun = experimentRun + 1;
+		experimentRun = nextExperimentRun;
+		startSimulationJob({
+			products: simulationProducts,
+			scenarios: selectedScenarios,
+			payoutPercent,
+			experimentRun: nextExperimentRun
 		});
+	}
+
+	$effect(() => {
+		simulationProducts;
+		selectedScenarios;
+		payoutPercent;
+		untrack(cancelSimulationJob);
 	});
 
 	type SimulationJobInput = {
@@ -91,6 +85,22 @@
 		payoutPercent: number;
 		experimentRun: number;
 	};
+
+	function startSimulationJob(input: Omit<SimulationJobInput, 'jobId'>) {
+		const jobId = simulationJobId + 1;
+		simulationJobId = jobId;
+		isSimulationLoading = true;
+		completedLaunches = 0;
+		scenarioResults = [];
+		void runSimulationJob({ jobId, ...input });
+	}
+
+	function cancelSimulationJob() {
+		simulationJobId += 1;
+		isSimulationLoading = false;
+		completedLaunches = 0;
+		scenarioResults = [];
+	}
 
 	async function runSimulationJob(input: SimulationJobInput) {
 		const batches: SimulationScenarioResultBatch[] = [];
@@ -171,7 +181,7 @@
 					>{selectedScenarioIds.length}/{PROMOTION_SCENARIOS.length}</span
 				>
 				<span class="mx-2 text-zinc-300">|</span>
-				Esperimento: <span class="font-semibold text-zinc-950">#{experimentRun}</span>
+				Esperimento: <span class="font-semibold text-zinc-950">{experimentLabel}</span>
 				<span class="mx-2 text-zinc-300">|</span>
 				<span class="font-semibold text-zinc-950"
 					>{formatNumber(launchCount)} lanci x {formatNumber(orderCount)} ordini</span
@@ -181,11 +191,11 @@
 
 		<button
 			type="button"
-			class="h-10 rounded border border-zinc-950 bg-zinc-950 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-60 lg:mt-6"
-			disabled={simulationProducts.length === 0}
+			class="h-10 cursor-pointer rounded border border-zinc-950 bg-zinc-950 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-60 lg:mt-6"
+			disabled={simulationProducts.length === 0 || selectedScenarios.length === 0 || isSimulationLoading}
 			onclick={rerunSimulation}
 		>
-			Rilancia simulazione
+			{isSimulationLoading ? 'Calcolo simulazione' : 'Rilancia simulazione'}
 		</button>
 	</div>
 
@@ -226,9 +236,13 @@
 		<p class="mt-4 border border-zinc-200 bg-zinc-50 px-3 py-4 text-center text-sm text-zinc-500">
 			Nessun prodotto salvato. Le simulazioni saranno disponibili dopo il salvataggio dei prodotti.
 		</p>
-	{:else if scenarioResults.length === 0 && !isSimulationLoading}
+	{:else if selectedScenarioIds.length === 0 && !isSimulationLoading}
 		<p class="mt-4 border border-zinc-200 bg-zinc-50 px-3 py-4 text-center text-sm text-zinc-500">
 			Nessuno scenario selezionato.
+		</p>
+	{:else if scenarioResults.length === 0 && !isSimulationLoading}
+		<p class="mt-4 border border-zinc-200 bg-zinc-50 px-3 py-4 text-center text-sm text-zinc-500">
+			Nessun esperimento lanciato. Usa Rilancia simulazione per calcolare le medie.
 		</p>
 	{:else if scenarioResults.length > 0}
 		<div class="mt-4 hidden overflow-auto border border-zinc-200 md:block">
