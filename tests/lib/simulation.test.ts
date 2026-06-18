@@ -2,8 +2,10 @@ import { describe, expect, test } from 'vitest';
 
 import {
 	calculateSimulationTotals,
+	calculatePromotionScenarioTotals,
 	generateComparableSimulationOrders,
 	generateRandomOrders,
+	PROMOTION_SCENARIOS,
 	type SimulationProduct
 } from '../../src/lib/simulation';
 
@@ -50,6 +52,101 @@ describe('calculateSimulationTotals', () => {
 		expect(totals.supplierCost).toBeCloseTo(102);
 		expect(totals.marginAmount).toBeCloseTo(48.24);
 		expect(totals.marginPercent).toBeCloseTo(30.15);
+	});
+});
+
+describe('promotion scenarios', () => {
+	const scenarioProducts = {
+		a: product({ code: 'A', listPrice: 30 }),
+		b: product({ code: 'B', listPrice: 20 }),
+		c: product({ code: 'C', listPrice: 10 }),
+		d: product({ code: 'D', listPrice: 8 }),
+		kit: product({ code: 'KIT-1', listPrice: 100, discountPercent: 10, category: 'kIt' })
+	};
+
+	test('defines the supported promotion scenarios in display order', () => {
+		expect(PROMOTION_SCENARIOS.map((scenario) => scenario.id)).toEqual([
+			'base',
+			'discount-10',
+			'discount-20',
+			'discount-25',
+			'discount-30',
+			'3x2',
+			'4x3',
+			'3x2-no-kit',
+			'4x3-no-kit'
+		]);
+	});
+
+	test('applies percentage scenarios on top of product DB discounts', () => {
+		const totals = calculatePromotionScenarioTotals({
+			scenario: PROMOTION_SCENARIOS[2],
+			orders: [
+				[
+					{
+						product: product({ code: 'SKU-DISCOUNTED', listPrice: 100, discountPercent: 15 }),
+						quantity: 1
+					}
+				]
+			],
+			payoutPercent: 0
+		});
+
+		expect(totals.grossRevenue).toBeCloseTo(65);
+		expect(totals.netRevenue).toBeCloseTo(65);
+	});
+
+	test('makes the cheapest eligible unit free for each complete 3x2 group', () => {
+		const totals = calculatePromotionScenarioTotals({
+			scenario: PROMOTION_SCENARIOS[5],
+			orders: [
+				[
+					{ product: scenarioProducts.a, quantity: 1 },
+					{ product: scenarioProducts.b, quantity: 1 },
+					{ product: scenarioProducts.c, quantity: 2 }
+				]
+			],
+			payoutPercent: 0
+		});
+
+		expect(totals.grossRevenue).toBeCloseTo(60);
+		expect(totals.netRevenue).toBeCloseTo(60);
+	});
+
+	test('makes the cheapest eligible unit free for each complete 4x3 group', () => {
+		const totals = calculatePromotionScenarioTotals({
+			scenario: PROMOTION_SCENARIOS[6],
+			orders: [
+				[
+					{ product: scenarioProducts.a, quantity: 1 },
+					{ product: scenarioProducts.b, quantity: 1 },
+					{ product: scenarioProducts.c, quantity: 1 },
+					{ product: scenarioProducts.d, quantity: 1 }
+				]
+			],
+			payoutPercent: 0
+		});
+
+		expect(totals.grossRevenue).toBeCloseTo(60);
+		expect(totals.netRevenue).toBeCloseTo(60);
+	});
+
+	test('excludes KIT products from no-KIT bundle counting and adds 20 percent to their DB discount', () => {
+		const totals = calculatePromotionScenarioTotals({
+			scenario: PROMOTION_SCENARIOS[7],
+			orders: [
+				[
+					{ product: scenarioProducts.a, quantity: 1 },
+					{ product: scenarioProducts.b, quantity: 1 },
+					{ product: scenarioProducts.c, quantity: 1 },
+					{ product: scenarioProducts.kit, quantity: 1 }
+				]
+			],
+			payoutPercent: 0
+		});
+
+		expect(totals.grossRevenue).toBeCloseTo(120);
+		expect(totals.netRevenue).toBeCloseTo(120);
 	});
 });
 
@@ -130,4 +227,15 @@ function orderFingerprints(orders: { product: SimulationProduct; quantity: numbe
 	return orders.map((order) =>
 		order.map((line) => ({ code: line.product.code, quantity: line.quantity }))
 	);
+}
+
+function product(overrides: Partial<SimulationProduct>): SimulationProduct {
+	return {
+		code: 'SKU',
+		listPrice: 100,
+		supplierPrice: 0,
+		vatRate: 0,
+		discountPercent: 0,
+		...overrides
+	};
 }

@@ -5,7 +5,8 @@ ralph.sh
 REMOTES.md
 skills-lock.json
 progress.txt
-prd.*
+prd.json
+prd.md
 node_modules
 
 # Output

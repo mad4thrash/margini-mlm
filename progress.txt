@@ -4,6 +4,7 @@
 - Keep Vitest tests in the top-level `tests/` folder, mirroring the relevant `src/` layout and importing source modules via relative paths.
 - Reuse `calculateProductMargin` for per-product gross, net, payout, and margin math when building aggregated calculations.
 - Use `generateComparableSimulationOrders` when multiple simulation options need like-for-like order inputs; it clones one seeded order set per option.
+- Use `PROMOTION_SCENARIOS` as the source of truth for available commercial scenarios and pass those objects into `calculatePromotionScenarioTotals`.
 
 Started: Thu Jun 18 10:31:40 CEST 2026
 ---
@@ -32,4 +33,17 @@ Started: Thu Jun 18 10:31:40 CEST 2026
   - `generateRandomOrders` defaults to 1000 orders and accepts `seed` for deterministic simulations and tests.
   - Bundle order modes use unit totals: 3x2 generates 3 or 6 units; 4x3 generates 4 or 8 units.
   - Use the comparable generator for scenario sets that must share the same products and quantities across options.
+---
+
+## 2026-06-18 10:49:46 +02:00 - US-003
+- Implemented promotion scenario definitions and order-level scenario total calculation in `src/lib/simulation.ts`.
+- Added percentage scenarios, 3x2 and 4x3 cheapest-unit-free logic, and no-KIT handling that matches category `KIT` case-insensitively while applying DB discount plus 20 percent to excluded KIT products.
+- Added Vitest coverage for scenario ordering, percentage discount stacking, per-unit bundle freebies, and no-KIT exclusions.
+- Files changed: `src/lib/simulation.ts`, `tests/lib/simulation.test.ts`, `prd.json`, `progress.txt`.
+- Quality checks run and results: `npm test -- tests/lib/simulation.test.ts` failed first with missing scenario exports, then passed with 11 tests; `npm test` passed with 6 files and 28 tests; `npm run check` passed with 0 errors and 0 warnings; `npm run build` passed.
+- Browser verification result: not relevant for US-003 because this story adds pure simulation rules and tests only.
+- **Learnings for future iterations:**
+  - `PROMOTION_SCENARIOS` includes display names, order modes, percent discounts, bundle group sizes, and no-KIT flags for downstream UI use.
+  - `calculatePromotionScenarioTotals` evaluates bundle discounts per order, expanding quantities to units so only the cheapest eligible units become free.
+  - No-KIT scenarios exclude only category `KIT` products from bundle counting; those KIT products still remain in the order with DB discount plus 20 percent.
 ---
