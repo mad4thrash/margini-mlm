@@ -1,0 +1,35 @@
+# codex-ralph Progress Log
+
+## Codebase Patterns
+- Keep Vitest tests in the top-level `tests/` folder, mirroring the relevant `src/` layout and importing source modules via relative paths.
+- Reuse `calculateProductMargin` for per-product gross, net, payout, and margin math when building aggregated calculations.
+- Use `generateComparableSimulationOrders` when multiple simulation options need like-for-like order inputs; it clones one seeded order set per option.
+
+Started: Thu Jun 18 10:31:40 CEST 2026
+---
+
+## 2026-06-18 10:36:58 +02:00 - US-001
+- Implemented a pure `src/lib/simulation.ts` calculation engine that aggregates gross revenue, net revenue, payout, supplier cost, margin amount, and margin percent across order lines.
+- Scenario discounts are added to product DB discounts with the effective discount capped at 100 percent; payout is calculated from discounted gross revenue paid by the customer.
+- Moved existing Vitest files from `src/lib` and `src/lib/server` into `tests/lib` and `tests/lib/server`, then added `tests/lib/simulation.test.ts`.
+- Files changed: `src/lib/simulation.ts`, `tests/lib/*.test.ts`, `tests/lib/server/products.test.ts`, `prd.json`, `progress.txt`.
+- Quality checks run and results: `npm test -- tests/lib/simulation.test.ts` failed first on the expected gross revenue assertion, then passed; `npm test` passed with 6 files and 18 tests; `npm run check` passed with 0 errors and 0 warnings; `npm run build` passed.
+- Browser verification result: not relevant for US-001 because this story adds a pure calculation module and test relocation only.
+- **Learnings for future iterations:**
+  - Tests now live outside `src`; new tests should be added under `tests/`.
+  - `calculateProductMargin` already encodes the product-level revenue, payout, and margin formula, so simulation aggregation should build on it rather than duplicating that math.
+  - `rg` is not installed in this environment; use PowerShell enumeration/search commands when needed.
+---
+
+## 2026-06-18 10:44:02 +02:00 - US-002
+- Implemented seeded random order generation in `src/lib/simulation.ts` for generic, 3x2, and 4x3 simulation modes.
+- Added comparable simulation order generation so multiple options receive cloned orders with the same products and quantities.
+- Added Vitest coverage for generic order volume and bounds, 3x2 and 4x3 unit counts, deterministic seeds, and like-for-like option inputs.
+- Files changed: `src/lib/simulation.ts`, `tests/lib/simulation.test.ts`, `prd.json`, `progress.txt`.
+- Quality checks run and results: `npm test -- tests/lib/simulation.test.ts` failed first with missing generator exports, then passed with 6 tests; `npm test` passed with 6 files and 23 tests; `npm run check` passed with 0 errors and 0 warnings; `npm run build` passed.
+- Browser verification result: not relevant for US-002 because this story adds pure simulation generation logic and tests only.
+- **Learnings for future iterations:**
+  - `generateRandomOrders` defaults to 1000 orders and accepts `seed` for deterministic simulations and tests.
+  - Bundle order modes use unit totals: 3x2 generates 3 or 6 units; 4x3 generates 4 or 8 units.
+  - Use the comparable generator for scenario sets that must share the same products and quantities across options.
+---
