@@ -2,6 +2,7 @@
 	import type { ProductTableProduct } from '$lib/product-table';
 
 	import ProductTable from './ProductTable.svelte';
+	import SimulationOptionsPanel from './SimulationOptionsPanel.svelte';
 	import SettingsPanel from './SettingsPanel.svelte';
 
 	type Props = {
@@ -27,5 +28,6 @@
 
 <div class="flex flex-col gap-4">
 	<SettingsPanel payoutPercent={payoutPercent} onPayoutSaved={handlePayoutSaved} />
+	<SimulationOptionsPanel {products} />
 	<ProductTable {products} {payoutPercent} />
 </div>

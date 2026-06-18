@@ -5,6 +5,7 @@
 - Reuse `calculateProductMargin` for per-product gross, net, payout, and margin math when building aggregated calculations.
 - Use `generateComparableSimulationOrders` when multiple simulation options need like-for-like order inputs; it clones one seeded order set per option.
 - Use `PROMOTION_SCENARIOS` as the source of truth for available commercial scenarios and pass those objects into `calculatePromotionScenarioTotals`.
+- Use `createDefaultScenarioSelection`, `toggleScenarioSelection`, and `toSimulationProducts` from `src/lib/simulation-panel.ts` for simulation panel state and product mapping.
 
 Started: Thu Jun 18 10:31:40 CEST 2026
 ---
@@ -46,4 +47,17 @@ Started: Thu Jun 18 10:31:40 CEST 2026
   - `PROMOTION_SCENARIOS` includes display names, order modes, percent discounts, bundle group sizes, and no-KIT flags for downstream UI use.
   - `calculatePromotionScenarioTotals` evaluates bundle discounts per order, expanding quantities to units so only the cheapest eligible units become free.
   - No-KIT scenarios exclude only category `KIT` products from bundle counting; those KIT products still remain in the order with DB discount plus 20 percent.
+---
+
+## 2026-06-18 11:02:15 +02:00 - US-004
+- Implemented a simulation options panel between settings and products on the main workspace.
+- Added all promotion scenarios as default-selected checkboxes, scenario activation toggling, a rerun button that advances the simulation launch, and an empty state for workspaces with no saved products.
+- Added pure helpers for default scenario selection, selection toggling, and mapping saved product rows into simulation products, with Vitest coverage.
+- Files changed: `src/lib/simulation-panel.ts`, `src/routes/SimulationOptionsPanel.svelte`, `src/routes/ProductWorkspace.svelte`, `tests/lib/simulation-panel.test.ts`, `prd.json`, `progress.txt`.
+- Quality checks run and results: `npm test -- tests/lib/simulation-panel.test.ts` failed first with missing `src/lib/simulation-panel`, then passed with 3 tests; `npm run check` passed with 0 errors and 0 warnings; `npm test` passed with 7 files and 31 tests; `npm run build` passed.
+- Browser verification result: verified against `http://127.0.0.1:5191` with isolated headless Chromium. The panel rendered 9 scenario checkboxes, all were checked by default, unchecking DB/base reduced checked scenarios to 8, saved-product state showed random orders ready, and clicking `Rilancia simulazione` advanced the launch to `#2`. The in-app browser endpoint was unavailable and the MCP browser profile was locked, so verification used a bundled Chromium debugging session.
+- **Learnings for future iterations:**
+  - `SimulationOptionsPanel.svelte` intentionally owns only option selection and rerun state; aggregated financial result display is still left for a later story.
+  - Keep reusable simulation UI state in `src/lib/simulation-panel.ts` so it can be unit-tested without component-test infrastructure.
+  - Browser verification may need a fallback isolated Chromium debugging session when the in-app browser endpoint is not registered and the MCP browser profile is locked.
 ---
