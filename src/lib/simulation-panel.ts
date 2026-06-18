@@ -2,8 +2,10 @@ import { getMarginTone, type MarginTone, type ProductTableProduct } from './prod
 import {
 	calculatePromotionScenarioLineTotals,
 	calculatePromotionScenarioTotals,
+	createFirstLaunchOrderLog,
 	generateRandomOrders,
 	PROMOTION_SCENARIOS,
+	type FirstLaunchOrderLog,
 	type PromotionScenario,
 	type PromotionScenarioId,
 	type SimulationLine,
@@ -27,6 +29,14 @@ export type CreateSimulationScenarioResultsInput = {
 	firstLaunch?: number;
 	launchCount?: number;
 	orderCount?: number;
+};
+
+export type CreateFirstLaunchSimulationOrderLogInput = {
+	products: SimulationProduct[];
+	scenarios: PromotionScenario[];
+	experimentRun: number;
+	orderCount?: number;
+	orderLimit?: number;
 };
 
 export type SimulationScenarioResultBatch = {
@@ -129,6 +139,26 @@ export function createSimulationScenarioResults(
 			totals,
 			marginTone: getMarginTone(totals.marginPercent)
 		};
+	});
+}
+
+export function createFirstLaunchSimulationOrderLog(
+	input: CreateFirstLaunchSimulationOrderLogInput
+): FirstLaunchOrderLog {
+	const { products, scenarios, experimentRun, orderCount, orderLimit = 10 } = input;
+	const launch = 1;
+	const orders = generateRandomOrders({
+		products,
+		orderCount,
+		seed: `${experimentRun}:launch:${launch}:orders`
+	});
+
+	return createFirstLaunchOrderLog({
+		experimentRun,
+		launch,
+		orderLimit,
+		scenarios,
+		orders
 	});
 }
 

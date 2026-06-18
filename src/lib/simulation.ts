@@ -81,6 +81,37 @@ export type PromotionScenarioLineTotalsInput = {
 	payoutPercent: number;
 };
 
+export type FirstLaunchOrderLogInput = {
+	experimentRun: number;
+	launch: number;
+	orderLimit?: number;
+	scenarios: PromotionScenario[];
+	orders: SimulationLine[][];
+};
+
+export type FirstLaunchOrderLog = {
+	experimentRun: number;
+	launch: number;
+	orderLimit: number;
+	scenarios: {
+		id: PromotionScenarioId;
+		name: string;
+		orders: {
+			orderNumber: number;
+			products: {
+				code: string;
+				category: string;
+				quantity: number;
+				listPrice: number;
+				discountPercent: number;
+				paidGrossPrice: number;
+				lineGrossTotal: number;
+			}[];
+			totalGross: number;
+		}[];
+	}[];
+};
+
 export const PROMOTION_SCENARIOS: PromotionScenario[] = [
 	{ id: 'no-discounts', name: 'No sconti', orderMode: 'generic', productDiscountMode: 'zero' },
 	{ id: 'base', name: 'DB/base', orderMode: 'generic' },
@@ -225,6 +256,32 @@ export function generateComparableSimulationOrders(
 	);
 }
 
+export function createFirstLaunchOrderLog(input: FirstLaunchOrderLogInput): FirstLaunchOrderLog {
+	const { experimentRun, launch, scenarios, orders, orderLimit = 10 } = input;
+	const limitedOrders = orders.slice(0, orderLimit);
+
+	return {
+		experimentRun,
+		launch,
+		orderLimit,
+		scenarios: scenarios.map((scenario) => ({
+			id: scenario.id,
+			name: scenario.name,
+			orders: limitedOrders.map((order, orderIndex) => {
+				const products = summarizeScenarioOrderProducts(order, scenario);
+
+				return {
+					orderNumber: orderIndex + 1,
+					products,
+					totalGross: roundCurrency(
+						products.reduce((total, product) => total + product.lineGrossTotal, 0)
+					)
+				};
+			})
+		}))
+	};
+}
+
 function applyPromotionScenarioToOrder(
 	order: SimulationLine[],
 	scenario: PromotionScenario
@@ -270,6 +327,48 @@ function applyPromotionScenarioToOrder(
 		},
 		quantity: 1
 	}));
+}
+
+function summarizeScenarioOrderProducts(
+	order: SimulationLine[],
+	scenario: PromotionScenario
+): FirstLaunchOrderLog['scenarios'][number]['orders'][number]['products'] {
+	const products = new Map<
+		string,
+		FirstLaunchOrderLog['scenarios'][number]['orders'][number]['products'][number]
+	>();
+
+	for (const line of applyPromotionScenarioToOrder(order, scenario)) {
+		const discountPercent = line.product.discountPercent ?? 0;
+		const paidGrossPrice = roundCurrency(
+			line.product.listPrice * (1 - cappedPercent(discountPercent) / 100)
+		);
+		const key = [
+			line.product.code,
+			line.product.category ?? '',
+			line.product.listPrice,
+			discountPercent,
+			paidGrossPrice
+		].join('|');
+		const existing = products.get(key);
+
+		if (existing) {
+			existing.quantity += 1;
+			existing.lineGrossTotal = roundCurrency(existing.lineGrossTotal + paidGrossPrice);
+		} else {
+			products.set(key, {
+				code: line.product.code,
+				category: line.product.category ?? '',
+				quantity: 1,
+				listPrice: line.product.listPrice,
+				discountPercent,
+				paidGrossPrice,
+				lineGrossTotal: paidGrossPrice
+			});
+		}
+	}
+
+	return Array.from(products.values());
 }
 
 function addBundleOrderTotals(
@@ -420,6 +519,10 @@ function scenarioProductDiscountPercent(
 
 function cappedPercent(percent: number): number {
 	return Math.min(percent, 100);
+}
+
+function roundCurrency(value: number): number {
+	return Math.round((value + Number.EPSILON) * 100) / 100;
 }
 
 function isKitProduct(product: SimulationProduct): boolean {

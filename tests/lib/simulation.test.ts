@@ -3,6 +3,7 @@ import { describe, expect, test } from 'vitest';
 import {
 	calculateSimulationTotals,
 	calculatePromotionScenarioTotals,
+	createFirstLaunchOrderLog,
 	generateComparableSimulationOrders,
 	generateRandomOrders,
 	PROMOTION_SCENARIOS,
@@ -230,6 +231,115 @@ describe('generateRandomOrders', () => {
 
 		expect(firstRun).toEqual(secondRun);
 		expect(firstRun).not.toEqual(differentSeedRun);
+	});
+
+	test('builds a readable first-launch order log for every selected scenario', () => {
+		const logProducts = {
+			a: { code: 'A', listPrice: 100, supplierPrice: 30, vatRate: 22, discountPercent: 5, category: '' },
+			b: { code: 'B', listPrice: 50, supplierPrice: 15, vatRate: 22, discountPercent: 0, category: '' },
+			c: { code: 'C', listPrice: 25, supplierPrice: 8, vatRate: 22, discountPercent: 0, category: '' },
+			d: { code: 'D', listPrice: 10, supplierPrice: 3, vatRate: 22, discountPercent: 0, category: '' }
+		} satisfies Record<string, SimulationProduct>;
+		const log = createFirstLaunchOrderLog({
+			experimentRun: 3,
+			launch: 1,
+			orderLimit: 1,
+			scenarios: [scenario('base'), scenario('3x2')],
+			orders: [
+				[
+					{ product: logProducts.a, quantity: 2 },
+					{ product: logProducts.b, quantity: 1 },
+					{ product: logProducts.c, quantity: 1 }
+				],
+				[{ product: logProducts.d, quantity: 1 }]
+			]
+		});
+
+		expect(log).toEqual({
+			experimentRun: 3,
+			launch: 1,
+			orderLimit: 1,
+			scenarios: [
+				{
+					id: 'base',
+					name: 'DB/base',
+					orders: [
+						{
+							orderNumber: 1,
+							products: [
+								{
+									code: 'A',
+									category: '',
+									quantity: 2,
+									listPrice: 100,
+									discountPercent: 5,
+									paidGrossPrice: 95,
+									lineGrossTotal: 190
+								},
+								{
+									code: 'B',
+									category: '',
+									quantity: 1,
+									listPrice: 50,
+									discountPercent: 0,
+									paidGrossPrice: 50,
+									lineGrossTotal: 50
+								},
+								{
+									code: 'C',
+									category: '',
+									quantity: 1,
+									listPrice: 25,
+									discountPercent: 0,
+									paidGrossPrice: 25,
+									lineGrossTotal: 25
+								}
+							],
+							totalGross: 265
+						}
+					]
+				},
+				{
+					id: '3x2',
+					name: '3x2',
+					orders: [
+						{
+							orderNumber: 1,
+							products: [
+								{
+									code: 'A',
+									category: '',
+									quantity: 2,
+									listPrice: 100,
+									discountPercent: 5,
+									paidGrossPrice: 95,
+									lineGrossTotal: 190
+								},
+								{
+									code: 'B',
+									category: '',
+									quantity: 1,
+									listPrice: 50,
+									discountPercent: 0,
+									paidGrossPrice: 50,
+									lineGrossTotal: 50
+								},
+								{
+									code: 'C',
+									category: '',
+									quantity: 1,
+									listPrice: 25,
+									discountPercent: 100,
+									paidGrossPrice: 0,
+									lineGrossTotal: 0
+								}
+							],
+							totalGross: 240
+						}
+					]
+				}
+			]
+		});
 	});
 });
 

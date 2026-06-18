@@ -3,6 +3,7 @@
 	import type { ProductTableProduct } from '$lib/product-table';
 	import {
 		createDefaultScenarioSelection,
+		createFirstLaunchSimulationOrderLog,
 		createSimulationScenarioResults,
 		mergeSimulationScenarioResultBatches,
 		toggleScenarioSelection,
@@ -104,6 +105,7 @@
 
 	async function runSimulationJob(input: SimulationJobInput) {
 		const batches: SimulationScenarioResultBatch[] = [];
+		void saveFirstLaunchOrderLog(input);
 
 		for (let firstLaunch = 1; firstLaunch <= launchCount; firstLaunch += launchBatchSize) {
 			if (input.jobId !== simulationJobId) {
@@ -132,6 +134,29 @@
 
 		scenarioResults = mergeSimulationScenarioResultBatches(batches);
 		isSimulationLoading = false;
+	}
+
+	async function saveFirstLaunchOrderLog(input: SimulationJobInput) {
+		try {
+			const log = createFirstLaunchSimulationOrderLog({
+				products: input.products,
+				scenarios: input.scenarios,
+				experimentRun: input.experimentRun,
+				orderCount,
+				orderLimit: 10
+			});
+			const response = await fetch('/simulation-logs', {
+				method: 'POST',
+				headers: { 'content-type': 'application/json' },
+				body: JSON.stringify(log)
+			});
+
+			if (!response.ok) {
+				throw new Error(`Simulation order log request failed with ${response.status}`);
+			}
+		} catch (error) {
+			console.error('Unable to write simulation order log', error);
+		}
 	}
 
 	function yieldToBrowser() {

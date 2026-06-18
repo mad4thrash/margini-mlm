@@ -10,6 +10,7 @@ prd.md
 node_modules
 CONTEXT.md
 /logs
+/.playwright-mcp
 
 # Output
 .output

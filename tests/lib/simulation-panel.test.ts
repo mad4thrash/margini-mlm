@@ -3,6 +3,7 @@ import { describe, expect, test } from "vitest";
 import {
 	createSimulationScenarioResults,
 	createDefaultScenarioSelection,
+	createFirstLaunchSimulationOrderLog,
 	mergeSimulationScenarioResultBatches,
 	toggleScenarioSelection,
 	toSimulationProducts,
@@ -179,6 +180,39 @@ describe("simulation panel helpers", () => {
 				}),
 			);
 		}
+	});
+
+	test("builds the first-launch order log from the same seeded orders used by simulations", () => {
+		const scenarios = [scenario("base"), scenario("discount-10")];
+		const experimentRun = 7;
+		const orderCount = 25;
+		const expectedOrders = generateRandomOrders({
+			products: simulationProducts,
+			orderCount,
+			seed: `${experimentRun}:launch:1:orders`,
+		});
+
+		const log = createFirstLaunchSimulationOrderLog({
+			products: simulationProducts,
+			scenarios,
+			experimentRun,
+			orderCount,
+		});
+
+		expect(log.experimentRun).toBe(experimentRun);
+		expect(log.launch).toBe(1);
+		expect(log.orderLimit).toBe(10);
+		expect(log.scenarios.map((loggedScenario) => loggedScenario.id)).toEqual([
+			"base",
+			"discount-10",
+		]);
+		expect(log.scenarios[0].orders).toHaveLength(10);
+		expect(log.scenarios[0].orders[0].products.reduce(
+			(total, product) => total + product.quantity,
+			0,
+		)).toBe(
+			expectedOrders[0].reduce((total, line) => total + line.quantity, 0),
+		);
 	});
 
 	test("reruns change generated orders while keeping scenarios comparable", () => {
