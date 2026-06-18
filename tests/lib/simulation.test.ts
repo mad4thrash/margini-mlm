@@ -198,6 +198,20 @@ describe('generateRandomOrders', () => {
 		expect(singleProductOrders).toHaveLength(50);
 	});
 
+	test('generates fixed-size orders with the selected unit count', () => {
+		for (const units of [1, 5, 20]) {
+			const orders = generateRandomOrders({
+				products,
+				orderCount: 25,
+				seed: `fixed-${units}`,
+				orderUnitCountSelection: { mode: 'fixed', units }
+			});
+
+			expect(orders).toHaveLength(25);
+			expect(new Set(orders.map(countOrderUnits))).toEqual(new Set([units]));
+		}
+	});
+
 	test('generates 3x2 orders with exactly 3 or 6 product units', () => {
 		const orders = generateRandomOrders({
 			products,

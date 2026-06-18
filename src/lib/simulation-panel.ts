@@ -9,6 +9,7 @@ import {
 	type PromotionScenario,
 	type PromotionScenarioId,
 	type SimulationLine,
+	type SimulationOrderUnitCountSelection,
 	type SimulationProduct,
 	type SimulationTotals
 } from './simulation';
@@ -29,6 +30,7 @@ export type CreateSimulationScenarioResultsInput = {
 	firstLaunch?: number;
 	launchCount?: number;
 	orderCount?: number;
+	orderUnitCountSelection?: SimulationOrderUnitCountSelection;
 };
 
 export type CreateFirstLaunchSimulationOrderLogInput = {
@@ -37,6 +39,7 @@ export type CreateFirstLaunchSimulationOrderLogInput = {
 	experimentRun: number;
 	orderCount?: number;
 	orderLimit?: number;
+	orderUnitCountSelection?: SimulationOrderUnitCountSelection;
 };
 
 export type SimulationScenarioResultBatch = {
@@ -85,7 +88,8 @@ export function createSimulationScenarioResults(
 		experimentRun,
 		firstLaunch = 1,
 		launchCount = 1000,
-		orderCount
+		orderCount,
+		orderUnitCountSelection
 	} = input;
 
 	if (products.length === 0 || scenarios.length === 0 || launchCount <= 0) {
@@ -104,6 +108,7 @@ export function createSimulationScenarioResults(
 		const orders = generateRandomOrders({
 			products,
 			orderCount,
+			orderUnitCountSelection,
 			seed: `${experimentRun}:launch:${launchIndex}:orders`
 		});
 		const launchOrderCount = orders.length;
@@ -145,11 +150,19 @@ export function createSimulationScenarioResults(
 export function createFirstLaunchSimulationOrderLog(
 	input: CreateFirstLaunchSimulationOrderLogInput
 ): FirstLaunchOrderLog {
-	const { products, scenarios, experimentRun, orderCount, orderLimit = 10 } = input;
+	const {
+		products,
+		scenarios,
+		experimentRun,
+		orderCount,
+		orderLimit = 10,
+		orderUnitCountSelection
+	} = input;
 	const launch = 1;
 	const orders = generateRandomOrders({
 		products,
 		orderCount,
+		orderUnitCountSelection,
 		seed: `${experimentRun}:launch:${launch}:orders`
 	});
 

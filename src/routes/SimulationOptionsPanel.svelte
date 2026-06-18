@@ -11,7 +11,11 @@
 		type SimulationScenarioResultBatch,
 		type SimulationScenarioResult
 	} from '$lib/simulation-panel';
-	import { PROMOTION_SCENARIOS, type PromotionScenarioId } from '$lib/simulation';
+	import {
+		PROMOTION_SCENARIOS,
+		type PromotionScenarioId,
+		type SimulationOrderUnitCountSelection
+	} from '$lib/simulation';
 
 	type Props = {
 		products: ProductTableProduct[];
@@ -20,6 +24,8 @@
 
 	let { products, payoutPercent }: Props = $props();
 	let selectedScenarioIds = $state<PromotionScenarioId[]>(createDefaultScenarioSelection());
+	let orderUnitCountMode = $state<SimulationOrderUnitCountSelection['mode']>('standard');
+	let fixedOrderUnitCount = $state(1);
 	let experimentRun = $state(0);
 	let scenarioResults = $state<SimulationScenarioResult[]>([]);
 	let isSimulationLoading = $state(false);
@@ -28,9 +34,20 @@
 	let selectedScenarios = $derived(
 		PROMOTION_SCENARIOS.filter((scenario) => selectedScenarioIds.includes(scenario.id))
 	);
+	let orderUnitCountSelection = $derived.by<SimulationOrderUnitCountSelection>(() =>
+		orderUnitCountMode === 'fixed'
+			? { mode: 'fixed', units: normalizedFixedOrderUnitCount(fixedOrderUnitCount) }
+			: { mode: 'standard' }
+	);
+	let orderUnitCountLabel = $derived(
+		orderUnitCountSelection.mode === 'fixed'
+			? `${orderUnitCountSelection.units} prodotti/ordine`
+			: 'standard'
+	);
 	const launchCount = 1000;
 	const orderCount = 1000;
 	const launchBatchSize = 25;
+	const fixedOrderUnitCountOptions = Array.from({ length: 20 }, (_, index) => index + 1);
 	let simulationJobId = 0;
 	let simulationProgress = $derived(
 		launchCount > 0 ? Math.round((completedLaunches / launchCount) * 100) : 0
@@ -68,7 +85,8 @@
 			products: simulationProducts,
 			scenarios: selectedScenarios,
 			payoutPercent,
-			experimentRun: nextExperimentRun
+			experimentRun: nextExperimentRun,
+			orderUnitCountSelection
 		});
 	}
 
@@ -76,6 +94,8 @@
 		simulationProducts;
 		selectedScenarios;
 		payoutPercent;
+		orderUnitCountMode;
+		fixedOrderUnitCount;
 		untrack(cancelSimulationJob);
 	});
 
@@ -85,6 +105,7 @@
 		scenarios: typeof selectedScenarios;
 		payoutPercent: number;
 		experimentRun: number;
+		orderUnitCountSelection: SimulationOrderUnitCountSelection;
 	};
 
 	function startSimulationJob(input: Omit<SimulationJobInput, 'jobId'>) {
@@ -120,7 +141,8 @@
 				experimentRun: input.experimentRun,
 				firstLaunch,
 				launchCount: currentLaunchCount,
-				orderCount
+				orderCount,
+				orderUnitCountSelection: input.orderUnitCountSelection
 			});
 
 			batches.push({ launchCount: currentLaunchCount, results });
@@ -143,7 +165,8 @@
 				scenarios: input.scenarios,
 				experimentRun: input.experimentRun,
 				orderCount,
-				orderLimit: 10
+				orderLimit: 10,
+				orderUnitCountSelection: input.orderUnitCountSelection
 			});
 			const response = await fetch('/simulation-logs', {
 				method: 'POST',
@@ -175,6 +198,10 @@
 
 	function formatPercent(value: number) {
 		return `${percentFormatter.format(value)}%`;
+	}
+
+	function normalizedFixedOrderUnitCount(value: number) {
+		return Math.min(Math.max(Math.trunc(value), 1), 20);
 	}
 
 	function toneClass(result: SimulationScenarioResult) {
@@ -211,6 +238,8 @@
 				<span class="font-semibold text-zinc-950"
 					>{formatNumber(launchCount)} lanci x {formatNumber(orderCount)} ordini</span
 				>
+				<span class="mx-2 text-zinc-300">|</span>
+				Dimensione ordine: <span class="font-semibold text-zinc-950">{orderUnitCountLabel}</span>
 			</p>
 		</div>
 
@@ -222,6 +251,51 @@
 		>
 			{isSimulationLoading ? 'Calcolo simulazione' : 'Rilancia simulazione'}
 		</button>
+	</div>
+
+	<div class="mt-4 border border-zinc-200 bg-zinc-50 px-3 py-3">
+		<fieldset class="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+			<div class="min-w-0">
+				<legend class="text-xs font-semibold uppercase tracking-wide text-zinc-500">
+					Prodotti per ordine
+				</legend>
+				<div class="mt-2 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+					<label class="inline-flex min-h-10 cursor-pointer items-center gap-2 border border-zinc-200 bg-white px-3 py-2 text-sm font-medium text-zinc-800 transition hover:border-zinc-300">
+						<input
+							class="h-4 w-4 border-zinc-300 text-zinc-950 focus:ring-zinc-950"
+							type="radio"
+							name="order-unit-count-mode"
+							value="standard"
+							bind:group={orderUnitCountMode}
+						/>
+						<span>Standard</span>
+					</label>
+					<label class="inline-flex min-h-10 cursor-pointer items-center gap-2 border border-zinc-200 bg-white px-3 py-2 text-sm font-medium text-zinc-800 transition hover:border-zinc-300">
+						<input
+							class="h-4 w-4 border-zinc-300 text-zinc-950 focus:ring-zinc-950"
+							type="radio"
+							name="order-unit-count-mode"
+							value="fixed"
+							bind:group={orderUnitCountMode}
+						/>
+						<span>Seleziona il numero</span>
+					</label>
+				</div>
+			</div>
+
+			<label class="flex flex-col gap-1 text-sm font-medium text-zinc-800 sm:max-w-56">
+				<span class="text-xs font-semibold uppercase tracking-wide text-zinc-500">Numero</span>
+				<select
+					class="h-10 rounded border border-zinc-300 bg-white px-3 text-sm text-zinc-950 shadow-sm disabled:cursor-not-allowed disabled:bg-zinc-100 disabled:text-zinc-500"
+					bind:value={fixedOrderUnitCount}
+					disabled={orderUnitCountMode === 'standard'}
+				>
+					{#each fixedOrderUnitCountOptions as option}
+						<option value={option}>{option}</option>
+					{/each}
+				</select>
+			</label>
+		</fieldset>
 	</div>
 
 	{#if isSimulationLoading}

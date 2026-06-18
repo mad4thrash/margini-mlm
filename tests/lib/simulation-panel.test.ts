@@ -215,6 +215,41 @@ describe("simulation panel helpers", () => {
 		);
 	});
 
+	test("uses the selected fixed unit count for results and first-launch logs", () => {
+		const scenarios = [scenario("base"), scenario("3x2")];
+		const experimentRun = 17;
+		const orderCount = 8;
+		const orderUnitCountSelection = { mode: "fixed", units: 5 } as const;
+
+		const results = createSimulationScenarioResults({
+			products: simulationProducts,
+			scenarios,
+			payoutPercent: 0,
+			experimentRun,
+			launchCount: 1,
+			orderCount,
+			orderUnitCountSelection,
+		});
+		const log = createFirstLaunchSimulationOrderLog({
+			products: simulationProducts,
+			scenarios,
+			experimentRun,
+			orderCount,
+			orderUnitCountSelection,
+		});
+
+		expect(results.map((result) => result.productCount)).toEqual([40, 40]);
+		expect(log.scenarios[0].orders).toHaveLength(8);
+		for (const loggedOrder of log.scenarios[0].orders) {
+			expect(
+				loggedOrder.products.reduce(
+					(total, product) => total + product.quantity,
+					0,
+				),
+			).toBe(5);
+		}
+	});
+
 	test("reruns change generated orders while keeping scenarios comparable", () => {
 		const firstRun = createSimulationScenarioResults({
 			products: simulationProducts,

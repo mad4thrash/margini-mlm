@@ -162,9 +162,9 @@ The `Impostazioni` section saves the payout percentage for sales representatives
 
 ### Order and Promotion Simulations
 
-The `Simulazioni` section uses saved products to generate random orders and compare selectable commercial scenarios. All scenarios are active by default and can be removed with checkboxes; `Rilancia simulazione` starts a new experiment and shows average results.
+The `Simulazioni` section uses saved products to generate random orders and compare selectable commercial scenarios. All scenarios are active by default and can be removed with checkboxes. The order size can stay on `Standard` or use `Seleziona il numero` to force every simulated order to contain the selected number of product units from 1 to 20. `Rilancia simulazione` starts a new experiment and shows average results.
 
-Scenarios include No sconti, DB/base, 10%, 20%, 25%, and 30% discounts, 3x2, 4x3, 3x2 no KIT, and 4x3 no KIT. No sconti forces product discounts to 0%; DB/base uses the discounts saved on products. Each experiment averages 1000 launches of 1000 orders each: inside each launch, the same orders are reused for every selected scenario. Each launch generates orders with 5% at 1 product, 47.5% with multiples of 3 chosen from 3, 6, 9, and 12 products, and 47.5% with multiples of 4 chosen from 4, 8, and 12 products. Each order has at most 12 products. In no-KIT scenarios, category `KIT` is excluded from bundle counting and receives the DB discount plus 20%.
+Scenarios include No sconti, DB/base, 10%, 20%, 25%, and 30% discounts, 3x2, 4x3, 3x2 no KIT, and 4x3 no KIT. No sconti forces product discounts to 0%; DB/base uses the discounts saved on products. Each experiment averages 1000 launches of 1000 orders each: inside each launch, the same orders are reused for every selected scenario. With the standard order size, each launch generates orders with 5% at 1 product, 47.5% with multiples of 3 chosen from 3, 6, 9, and 12 products, and 47.5% with multiples of 4 chosen from 4, 8, and 12 products. Standard orders have at most 12 products. In no-KIT scenarios, category `KIT` is excluded from bundle counting and receives the DB discount plus 20%.
 
 ### Margin Formula
 

@@ -30,6 +30,9 @@ export type SimulationTotals = {
 };
 
 export type SimulationOrderMode = 'generic' | '3x2' | '4x3';
+export type SimulationOrderUnitCountSelection =
+	| { mode: 'standard' }
+	| { mode: 'fixed'; units: number };
 
 type GenericOrderKind = 'single' | 'multiples-of-3' | 'multiples-of-4';
 
@@ -37,6 +40,7 @@ export type GenerateRandomOrdersInput = {
 	products: SimulationProduct[];
 	mode?: SimulationOrderMode;
 	orderCount?: number;
+	orderUnitCountSelection?: SimulationOrderUnitCountSelection;
 	seed?: string | number;
 };
 
@@ -226,11 +230,25 @@ export function calculatePromotionScenarioLineTotals(
 }
 
 export function generateRandomOrders(input: GenerateRandomOrdersInput): SimulationLine[][] {
-	const { products, mode = 'generic', orderCount = 1000, seed } = input;
+	const {
+		products,
+		mode = 'generic',
+		orderCount = 1000,
+		orderUnitCountSelection = { mode: 'standard' },
+		seed
+	} = input;
 	const random = createRandom(seed);
 
 	if (products.length === 0 || orderCount <= 0) {
 		return [];
+	}
+
+	if (orderUnitCountSelection.mode === 'fixed') {
+		const unitCount = normalizedFixedOrderUnitCount(orderUnitCountSelection.units);
+
+		return Array.from({ length: orderCount }, () =>
+			generateOrderWithUnitCount(products, random, unitCount)
+		);
 	}
 
 	if (mode === 'generic') {
@@ -601,6 +619,10 @@ function generateOrderWithUnitCount(
 	}
 
 	return Array.from(lines.values());
+}
+
+function normalizedFixedOrderUnitCount(units: number): number {
+	return Math.min(Math.max(Math.trunc(units), 1), 20);
 }
 
 function randomChoice<T>(options: T[], random: () => number): T {
