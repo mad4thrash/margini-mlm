@@ -13,6 +13,7 @@ Il progetto e open source ed e distribuito con licenza MIT. Vedi [LICENSE](LICEN
 - Impostazione persistente della percentuale payout.
 - Download del template CSV, importazione prodotti e aggiornamento per codice prodotto.
 - Esportazione CSV dei dati visibili, incluse modifiche non ancora salvate e margini calcolati.
+- Simulazione ordini e promozioni con confronto di fatturato lordo, margine totale e margine percentuale.
 - Persistenza locale con SQLite tramite Prisma.
 
 ### Requisiti
@@ -71,6 +72,12 @@ L'esportazione include le righe attualmente visibili nell'interfaccia, anche qua
 
 La sezione `Impostazioni` salva la percentuale payout per le incaricate alla vendita. Il valore deve essere una percentuale non negativa e viene persistito in SQLite. Dopo il reload, i margini prodotto usano il payout salvato.
 
+### Simulazioni ordini e promozioni
+
+La sezione `Simulazioni` usa i prodotti salvati per generare ordini casuali e confrontare scenari commerciali selezionabili. Tutti gli scenari sono attivi di default e possono essere esclusi con checkbox; `Rilancia simulazione` rigenera gli ordini mantenendo il confronto sugli stessi dati per gli scenari selezionati.
+
+Gli scenari includono DB/base, sconti 10%, 20%, 25% e 30%, 3x2, 4x3, 3x2 no KIT e 4x3 no KIT. Le simulazioni generiche usano almeno 1000 ordini con 1-8 righe prodotto e quantita 1-4 per riga. Le simulazioni 3x2 generano ordini con esattamente 3 o 6 prodotti; le simulazioni 4x3 generano ordini con esattamente 4 o 8 prodotti. Negli scenari no KIT, la categoria `KIT` e esclusa dal conteggio del bundle e riceve lo sconto DB piu 20%.
+
 ### Formula margine
 
 ```text
@@ -94,6 +101,7 @@ The project is open source under the MIT License. See [LICENSE](LICENSE).
 - Persistent payout percentage setting.
 - CSV template download, product import, and product updates by product code.
 - CSV export of visible data, including unsaved edits and calculated margins.
+- Order and promotion simulations comparing gross revenue, total margin, and margin percentage.
 - Local SQLite persistence through Prisma.
 
 ### Requirements
@@ -151,6 +159,12 @@ CSV export includes the rows currently visible in the interface, even when they 
 ### Payout Settings
 
 The `Impostazioni` section saves the payout percentage for sales representatives. The value must be a non-negative percentage and is persisted to SQLite. After reload, product margins use the saved payout.
+
+### Order and Promotion Simulations
+
+The `Simulazioni` section uses saved products to generate random orders and compare selectable commercial scenarios. All scenarios are active by default and can be removed with checkboxes; `Rilancia simulazione` regenerates the orders while keeping selected scenarios comparable against the same generated inputs.
+
+Scenarios include DB/base, 10%, 20%, 25%, and 30% discounts, 3x2, 4x3, 3x2 no KIT, and 4x3 no KIT. Generic simulations use at least 1000 orders with 1-8 product lines and quantity 1-4 per line. 3x2 simulations generate orders with exactly 3 or 6 products; 4x3 simulations generate orders with exactly 4 or 8 products. In no-KIT scenarios, category `KIT` is excluded from bundle counting and receives the DB discount plus 20%.
 
 ### Margin Formula
 

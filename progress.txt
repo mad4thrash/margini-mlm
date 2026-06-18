@@ -75,3 +75,13 @@ Started: Thu Jun 18 10:31:40 CEST 2026
   - `createSimulationScenarioResults` accepts an optional small `orderCount` for deterministic focused tests while the UI uses the generator default of 1000 orders.
   - Scenario result views need the current `payoutPercent`; route-level wiring should pass it anywhere aggregate margins are displayed.
 ---
+
+## 2026-06-18 11:20:00 +02:00 - US-006
+- Updated the Italian and English README feature lists and usage notes to describe order and promotion simulations.
+- Documented selectable scenarios, rerun behavior, generic order assumptions, and the required 3x2/4x3 simulated product counts.
+- Files changed: `README.md`, `prd.json`, `progress.txt`.
+- Quality checks run and results: baseline `npm test` passed with 7 files and 32 tests; baseline `npm run check` passed with 0 errors and 0 warnings; final `npm test` passed with 7 files and 32 tests; final `npm run check` passed with 0 errors and 0 warnings; final `npm run build` passed.
+- Browser verification result: not relevant for US-006 because this story changes README documentation only.
+- **Learnings for future iterations:**
+  - The project currently has one bilingual README; feature and usage documentation should be updated in both `Italiano` and `English` sections.
+---
