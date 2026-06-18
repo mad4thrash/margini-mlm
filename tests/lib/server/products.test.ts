@@ -5,7 +5,7 @@ import path from 'node:path';
 import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { PrismaClient } from '../../generated/prisma/client';
+import { PrismaClient } from '../../../src/generated/prisma/client';
 import {
 	createProduct,
 	deleteProduct,
@@ -14,7 +14,7 @@ import {
 	listProducts,
 	updateProduct,
 	updateSettings
-} from './products';
+} from '../../../src/lib/server/products';
 
 let db: PrismaClient;
 let tempDir: string;

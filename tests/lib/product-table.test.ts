@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 
-import { createEditableProductRow, getMarginTone } from './product-table';
+import { createEditableProductRow, getMarginTone } from '../../src/lib/product-table';
 
 describe('product table helpers', () => {
 	test('creates editable rows with a zero discount default', () => {

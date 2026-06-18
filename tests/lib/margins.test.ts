@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 
-import { calculateProductMargin } from './margins';
+import { calculateProductMargin } from '../../src/lib/margins';
 
 describe('calculateProductMargin', () => {
 	test('calculates discounted price, revenue, payout, and margin values', () => {

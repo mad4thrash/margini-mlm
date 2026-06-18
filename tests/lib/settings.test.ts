@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 
-import { createEditablePayoutSettings, isValidPayoutPercent } from './settings';
+import { createEditablePayoutSettings, isValidPayoutPercent } from '../../src/lib/settings';
 
 describe('payout settings helpers', () => {
 	test('creates editable payout settings from the persisted percentage', () => {

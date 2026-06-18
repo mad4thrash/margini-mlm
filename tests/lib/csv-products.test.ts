@@ -5,7 +5,7 @@ import {
 	CSV_PRODUCT_TEMPLATE,
 	parseProductsCsv,
 	type CsvProductInput
-} from './csv-products';
+} from '../../src/lib/csv-products';
 
 describe('product CSV helpers', () => {
 	it('provides the import template headers without payoutPercent', () => {
