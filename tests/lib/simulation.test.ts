@@ -66,6 +66,7 @@ describe('promotion scenarios', () => {
 
 	test('defines the supported promotion scenarios in display order', () => {
 		expect(PROMOTION_SCENARIOS.map((scenario) => scenario.id)).toEqual([
+			'no-discounts',
 			'base',
 			'discount-10',
 			'discount-20',
@@ -78,9 +79,27 @@ describe('promotion scenarios', () => {
 		]);
 	});
 
+	test('calculates no-discount scenario totals with product discounts forced to zero', () => {
+		const totals = calculatePromotionScenarioTotals({
+			scenario: PROMOTION_SCENARIOS[0],
+			orders: [
+				[
+					{
+						product: product({ code: 'SKU-DISCOUNTED', listPrice: 100, discountPercent: 35 }),
+						quantity: 1
+					}
+				]
+			],
+			payoutPercent: 0
+		});
+
+		expect(totals.grossRevenue).toBeCloseTo(100);
+		expect(totals.netRevenue).toBeCloseTo(100);
+	});
+
 	test('applies percentage scenarios on top of product DB discounts', () => {
 		const totals = calculatePromotionScenarioTotals({
-			scenario: PROMOTION_SCENARIOS[2],
+			scenario: scenario('discount-20'),
 			orders: [
 				[
 					{
@@ -98,7 +117,7 @@ describe('promotion scenarios', () => {
 
 	test('makes the cheapest eligible unit free for each complete 3x2 group', () => {
 		const totals = calculatePromotionScenarioTotals({
-			scenario: PROMOTION_SCENARIOS[5],
+			scenario: scenario('3x2'),
 			orders: [
 				[
 					{ product: scenarioProducts.a, quantity: 1 },
@@ -115,7 +134,7 @@ describe('promotion scenarios', () => {
 
 	test('makes the cheapest eligible unit free for each complete 4x3 group', () => {
 		const totals = calculatePromotionScenarioTotals({
-			scenario: PROMOTION_SCENARIOS[6],
+			scenario: scenario('4x3'),
 			orders: [
 				[
 					{ product: scenarioProducts.a, quantity: 1 },
@@ -133,7 +152,7 @@ describe('promotion scenarios', () => {
 
 	test('excludes KIT products from no-KIT bundle counting and adds 20 percent to their DB discount', () => {
 		const totals = calculatePromotionScenarioTotals({
-			scenario: PROMOTION_SCENARIOS[7],
+			scenario: scenario('3x2-no-kit'),
 			orders: [
 				[
 					{ product: scenarioProducts.a, quantity: 1 },
@@ -249,4 +268,14 @@ function product(overrides: Partial<SimulationProduct>): SimulationProduct {
 		discountPercent: 0,
 		...overrides
 	};
+}
+
+function scenario(id: (typeof PROMOTION_SCENARIOS)[number]['id']) {
+	const promotionScenario = PROMOTION_SCENARIOS.find((candidate) => candidate.id === id);
+
+	if (!promotionScenario) {
+		throw new Error(`Missing scenario ${id}`);
+	}
+
+	return promotionScenario;
 }

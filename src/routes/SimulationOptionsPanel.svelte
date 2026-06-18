@@ -1,10 +1,13 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
 	import type { ProductTableProduct } from '$lib/product-table';
 	import {
 		createDefaultScenarioSelection,
 		createSimulationScenarioResults,
+		mergeSimulationScenarioResultBatches,
 		toggleScenarioSelection,
 		toSimulationProducts,
+		type SimulationScenarioResultBatch,
 		type SimulationScenarioResult
 	} from '$lib/simulation-panel';
 	import { PROMOTION_SCENARIOS, type PromotionScenarioId } from '$lib/simulation';
@@ -16,18 +19,20 @@
 
 	let { products, payoutPercent }: Props = $props();
 	let selectedScenarioIds = $state<PromotionScenarioId[]>(createDefaultScenarioSelection());
-	let simulationRun = $state(1);
+	let experimentRun = $state(1);
+	let scenarioResults = $state<SimulationScenarioResult[]>([]);
+	let isSimulationLoading = $state(false);
+	let completedLaunches = $state(0);
 	let simulationProducts = $derived(toSimulationProducts(products));
 	let selectedScenarios = $derived(
 		PROMOTION_SCENARIOS.filter((scenario) => selectedScenarioIds.includes(scenario.id))
 	);
-	let scenarioResults = $derived(
-		createSimulationScenarioResults({
-			products: simulationProducts,
-			scenarios: selectedScenarios,
-			payoutPercent,
-			simulationRun
-		})
+	const launchCount = 1000;
+	const orderCount = 1000;
+	const launchBatchSize = 25;
+	let simulationJobId = 0;
+	let simulationProgress = $derived(
+		launchCount > 0 ? Math.round((completedLaunches / launchCount) * 100) : 0
 	);
 
 	const numberFormatter = new Intl.NumberFormat('it-IT');
@@ -49,7 +54,80 @@
 	}
 
 	function rerunSimulation() {
-		simulationRun += 1;
+		experimentRun += 1;
+	}
+
+	$effect(() => {
+		const productsForSimulation = simulationProducts;
+		const scenariosForSimulation = selectedScenarios;
+		const payoutForSimulation = payoutPercent;
+		const experimentForSimulation = experimentRun;
+		const jobId = untrack(() => simulationJobId + 1);
+		simulationJobId = jobId;
+
+		if (productsForSimulation.length === 0 || scenariosForSimulation.length === 0) {
+			scenarioResults = [];
+			isSimulationLoading = false;
+			completedLaunches = 0;
+			return;
+		}
+
+		isSimulationLoading = true;
+		completedLaunches = 0;
+		scenarioResults = [];
+		void runSimulationJob({
+			jobId,
+			products: productsForSimulation,
+			scenarios: scenariosForSimulation,
+			payoutPercent: payoutForSimulation,
+			experimentRun: experimentForSimulation
+		});
+	});
+
+	type SimulationJobInput = {
+		jobId: number;
+		products: typeof simulationProducts;
+		scenarios: typeof selectedScenarios;
+		payoutPercent: number;
+		experimentRun: number;
+	};
+
+	async function runSimulationJob(input: SimulationJobInput) {
+		const batches: SimulationScenarioResultBatch[] = [];
+
+		for (let firstLaunch = 1; firstLaunch <= launchCount; firstLaunch += launchBatchSize) {
+			if (input.jobId !== simulationJobId) {
+				return;
+			}
+
+			const currentLaunchCount = Math.min(launchBatchSize, launchCount - firstLaunch + 1);
+			const results = createSimulationScenarioResults({
+				products: input.products,
+				scenarios: input.scenarios,
+				payoutPercent: input.payoutPercent,
+				experimentRun: input.experimentRun,
+				firstLaunch,
+				launchCount: currentLaunchCount,
+				orderCount
+			});
+
+			batches.push({ launchCount: currentLaunchCount, results });
+			completedLaunches = firstLaunch + currentLaunchCount - 1;
+			await yieldToBrowser();
+		}
+
+		if (input.jobId !== simulationJobId) {
+			return;
+		}
+
+		scenarioResults = mergeSimulationScenarioResultBatches(batches);
+		isSimulationLoading = false;
+	}
+
+	function yieldToBrowser() {
+		return new Promise<void>((resolve) => {
+			window.setTimeout(resolve, 0);
+		});
 	}
 
 	function formatNumber(value: number) {
@@ -93,7 +171,11 @@
 					>{selectedScenarioIds.length}/{PROMOTION_SCENARIOS.length}</span
 				>
 				<span class="mx-2 text-zinc-300">|</span>
-				Lancio: <span class="font-semibold text-zinc-950">#{simulationRun}</span>
+				Esperimento: <span class="font-semibold text-zinc-950">#{experimentRun}</span>
+				<span class="mx-2 text-zinc-300">|</span>
+				<span class="font-semibold text-zinc-950"
+					>{formatNumber(launchCount)} lanci x {formatNumber(orderCount)} ordini</span
+				>
 			</p>
 		</div>
 
@@ -106,6 +188,23 @@
 			Rilancia simulazione
 		</button>
 	</div>
+
+	{#if isSimulationLoading}
+		<div class="mt-4 border border-zinc-200 bg-zinc-50 px-3 py-3" role="status" aria-live="polite">
+			<div class="flex items-center justify-between gap-3 text-sm">
+				<p class="font-medium text-zinc-800">Calcolo medie simulazione</p>
+				<p class="tabular-nums text-zinc-600">
+					{formatNumber(completedLaunches)}/{formatNumber(launchCount)} lanci
+				</p>
+			</div>
+			<div class="mt-2 h-2 overflow-hidden rounded bg-zinc-200">
+				<div
+					class="h-full rounded bg-zinc-950 transition-[width] duration-150"
+					style={`width: ${simulationProgress}%`}
+				></div>
+			</div>
+		</div>
+	{/if}
 
 	<div class="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
 		{#each PROMOTION_SCENARIOS as scenario}
@@ -127,11 +226,11 @@
 		<p class="mt-4 border border-zinc-200 bg-zinc-50 px-3 py-4 text-center text-sm text-zinc-500">
 			Nessun prodotto salvato. Le simulazioni saranno disponibili dopo il salvataggio dei prodotti.
 		</p>
-	{:else if scenarioResults.length === 0}
+	{:else if scenarioResults.length === 0 && !isSimulationLoading}
 		<p class="mt-4 border border-zinc-200 bg-zinc-50 px-3 py-4 text-center text-sm text-zinc-500">
 			Nessuno scenario selezionato.
 		</p>
-	{:else}
+	{:else if scenarioResults.length > 0}
 		<div class="mt-4 hidden overflow-auto border border-zinc-200 md:block">
 			<table class="min-w-[58rem] table-fixed border-collapse text-left text-sm" aria-live="polite">
 				<thead class="bg-zinc-100 text-xs uppercase tracking-wide text-zinc-600">

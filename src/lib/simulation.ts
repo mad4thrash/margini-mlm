@@ -45,6 +45,7 @@ export type GenerateComparableSimulationOrdersInput = GenerateRandomOrdersInput 
 };
 
 export type PromotionScenarioId =
+	| 'no-discounts'
 	| 'base'
 	| 'discount-10'
 	| 'discount-20'
@@ -55,10 +56,13 @@ export type PromotionScenarioId =
 	| '3x2-no-kit'
 	| '4x3-no-kit';
 
+type ProductDiscountMode = 'saved' | 'zero';
+
 export type PromotionScenario = {
 	id: PromotionScenarioId;
 	name: string;
 	orderMode: SimulationOrderMode;
+	productDiscountMode?: ProductDiscountMode;
 	discountPercent?: number;
 	bundleGroupSize?: 3 | 4;
 	excludeKitFromBundle?: boolean;
@@ -71,7 +75,14 @@ export type PromotionScenarioTotalsInput = {
 	payoutPercent: number;
 };
 
+export type PromotionScenarioLineTotalsInput = {
+	scenario: PromotionScenario;
+	lines: SimulationLine[];
+	payoutPercent: number;
+};
+
 export const PROMOTION_SCENARIOS: PromotionScenario[] = [
+	{ id: 'no-discounts', name: 'No sconti', orderMode: 'generic', productDiscountMode: 'zero' },
 	{ id: 'base', name: 'DB/base', orderMode: 'generic' },
 	{ id: 'discount-10', name: '10 percent', orderMode: 'generic', discountPercent: 10 },
 	{ id: 'discount-20', name: '20 percent', orderMode: 'generic', discountPercent: 20 },
@@ -141,34 +152,46 @@ export function calculatePromotionScenarioTotals(
 	input: PromotionScenarioTotalsInput
 ): SimulationTotals {
 	const { scenario, orders, payoutPercent } = input;
-	const totals = orders.reduce(
-		(accumulator, order) => {
-			const orderTotals = calculateSimulationTotals({
-				lines: applyPromotionScenarioToOrder(order, scenario),
-				payoutPercent
-			});
 
-			accumulator.grossRevenue += orderTotals.grossRevenue;
-			accumulator.netRevenue += orderTotals.netRevenue;
-			accumulator.payout += orderTotals.payout;
-			accumulator.supplierCost += orderTotals.supplierCost;
-			accumulator.marginAmount += orderTotals.marginAmount;
+	if (!scenario.bundleGroupSize) {
+		return calculatePromotionScenarioLineTotals({
+			scenario,
+			lines: countProductLinesInOrders(orders),
+			payoutPercent
+		});
+	}
 
-			return accumulator;
-		},
-		{
-			grossRevenue: 0,
-			netRevenue: 0,
-			payout: 0,
-			supplierCost: 0,
-			marginAmount: 0
-		}
-	);
+	const totals = createEmptyTotals();
+	const marginCache = new Map<string, SimulationTotals>();
+
+	for (const order of orders) {
+		addBundleOrderTotals(totals, order, scenario, payoutPercent, marginCache);
+	}
 
 	return {
 		...totals,
 		marginPercent: totals.netRevenue > 0 ? (totals.marginAmount / totals.netRevenue) * 100 : 0
 	};
+}
+
+export function calculatePromotionScenarioLineTotals(
+	input: PromotionScenarioLineTotalsInput
+): SimulationTotals {
+	const { scenario, lines, payoutPercent } = input;
+
+	return calculateSimulationTotals({
+		lines: lines.map((line) => ({
+			product: {
+				...line.product,
+				discountPercent: cappedPercent(
+					scenarioProductDiscountPercent(line.product, scenario) +
+						(scenario.discountPercent ?? 0)
+				)
+			},
+			quantity: line.quantity
+		})),
+		payoutPercent
+	});
 }
 
 export function generateRandomOrders(input: GenerateRandomOrdersInput): SimulationLine[][] {
@@ -209,14 +232,15 @@ function applyPromotionScenarioToOrder(
 	const units = expandOrderUnits(order).map((line, index) => ({
 		line,
 		index,
-		discountPercent: baseDiscountPercent(line.product) + (scenario.discountPercent ?? 0)
+		discountPercent: scenarioProductDiscountPercent(line.product, scenario) + (scenario.discountPercent ?? 0)
 	}));
 
 	if (scenario.excludeKitFromBundle) {
 		for (const unit of units) {
 			if (isKitProduct(unit.line.product)) {
 				unit.discountPercent =
-					baseDiscountPercent(unit.line.product) + (scenario.kitDiscountPercent ?? 0);
+					scenarioProductDiscountPercent(unit.line.product, scenario) +
+					(scenario.kitDiscountPercent ?? 0);
 			}
 		}
 	}
@@ -248,6 +272,131 @@ function applyPromotionScenarioToOrder(
 	}));
 }
 
+function addBundleOrderTotals(
+	totals: Omit<SimulationTotals, 'marginPercent'>,
+	order: SimulationLine[],
+	scenario: PromotionScenario,
+	payoutPercent: number,
+	marginCache: Map<string, SimulationTotals>
+) {
+	const units: {
+		product: SimulationProduct;
+		discountPercent: number;
+		index: number;
+	}[] = [];
+
+	for (const line of order) {
+		for (let unit = 0; unit < line.quantity; unit += 1) {
+			const productDiscountPercent = scenarioProductDiscountPercent(line.product, scenario);
+			const discountPercent =
+				scenario.excludeKitFromBundle && isKitProduct(line.product)
+					? productDiscountPercent + (scenario.kitDiscountPercent ?? 0)
+					: productDiscountPercent + (scenario.discountPercent ?? 0);
+
+			units.push({
+				product: line.product,
+				discountPercent,
+				index: units.length
+			});
+		}
+	}
+
+	const eligibleUnits = units
+		.filter((unit) => !(scenario.excludeKitFromBundle && isKitProduct(unit.product)))
+		.map((unit) => ({
+			...unit,
+			paidGrossPrice: unit.product.listPrice * (1 - cappedPercent(unit.discountPercent) / 100)
+		}))
+		.sort(
+			(first, second) => first.paidGrossPrice - second.paidGrossPrice || first.index - second.index
+		);
+	const freeUnitCount = Math.floor(eligibleUnits.length / (scenario.bundleGroupSize ?? 1));
+
+	for (const unit of eligibleUnits.slice(0, freeUnitCount)) {
+		units[unit.index].discountPercent = 100;
+	}
+
+	for (const unit of units) {
+		const margin = cachedUnitMargin(unit.product, unit.discountPercent, payoutPercent, marginCache);
+
+		totals.grossRevenue += margin.grossRevenue;
+		totals.netRevenue += margin.netRevenue;
+		totals.payout += margin.payout;
+		totals.supplierCost += margin.supplierCost;
+		totals.marginAmount += margin.marginAmount;
+	}
+}
+
+function cachedUnitMargin(
+	product: SimulationProduct,
+	discountPercent: number,
+	payoutPercent: number,
+	marginCache: Map<string, SimulationTotals>
+): SimulationTotals {
+	const effectiveDiscountPercent = cappedPercent(discountPercent);
+	const cacheKey = [
+		product.code,
+		product.listPrice,
+		product.supplierPrice,
+		product.vatRate,
+		effectiveDiscountPercent,
+		payoutPercent
+	].join('|');
+	const cachedMargin = marginCache.get(cacheKey);
+
+	if (cachedMargin) {
+		return cachedMargin;
+	}
+
+	const margin = calculateProductMargin({
+		listPrice: product.listPrice,
+		supplierPrice: product.supplierPrice,
+		vatRate: product.vatRate,
+		discountPercent: effectiveDiscountPercent,
+		payoutPercent
+	});
+	const totals = {
+		grossRevenue: margin.discountedGrossPrice,
+		netRevenue: margin.netRevenue,
+		payout: margin.payoutAmount,
+		supplierCost: product.supplierPrice,
+		marginAmount: margin.marginAmount,
+		marginPercent: margin.marginPercent
+	};
+
+	marginCache.set(cacheKey, totals);
+
+	return totals;
+}
+
+function createEmptyTotals(): Omit<SimulationTotals, 'marginPercent'> {
+	return {
+		grossRevenue: 0,
+		netRevenue: 0,
+		payout: 0,
+		supplierCost: 0,
+		marginAmount: 0
+	};
+}
+
+function countProductLinesInOrders(orders: SimulationLine[][]): SimulationLine[] {
+	const lines = new Map<string, SimulationLine>();
+
+	for (const order of orders) {
+		for (const line of order) {
+			const existing = lines.get(line.product.code);
+
+			if (existing) {
+				existing.quantity += line.quantity;
+			} else {
+				lines.set(line.product.code, { product: line.product, quantity: line.quantity });
+			}
+		}
+	}
+
+	return Array.from(lines.values());
+}
+
 function expandOrderUnits(order: SimulationLine[]): SimulationLine[] {
 	return order.flatMap((line) =>
 		Array.from({ length: line.quantity }, () => ({ product: line.product, quantity: 1 }))
@@ -256,6 +405,17 @@ function expandOrderUnits(order: SimulationLine[]): SimulationLine[] {
 
 function baseDiscountPercent(product: SimulationProduct): number {
 	return product.discountPercent ?? 0;
+}
+
+function scenarioProductDiscountPercent(
+	product: SimulationProduct,
+	scenario: PromotionScenario
+): number {
+	if (scenario.productDiscountMode === 'zero') {
+		return 0;
+	}
+
+	return baseDiscountPercent(product);
 }
 
 function cappedPercent(percent: number): number {

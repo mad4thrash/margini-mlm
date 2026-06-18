@@ -245,7 +245,7 @@
 	{/if}
 
 	<div class="hidden overflow-auto border border-zinc-200 bg-white shadow-sm md:block md:max-h-[calc(100vh-15rem)]">
-		<table class="min-w-[76rem] table-fixed border-collapse text-left text-sm">
+		<table class="min-w-304 table-fixed border-collapse text-left text-sm">
 			<thead class="sticky top-0 z-10 bg-zinc-100 text-xs uppercase tracking-wide text-zinc-600 shadow-[0_1px_0_0_rgb(228_228_231)]">
 				<tr>
 					<th class="w-28 px-3 py-3 font-semibold">Codice</th>
