@@ -37,13 +37,15 @@
 	let orderUnitCountSelection = $derived.by<SimulationOrderUnitCountSelection>(() =>
 		orderUnitCountMode === 'fixed'
 			? { mode: 'fixed', units: normalizedFixedOrderUnitCount(fixedOrderUnitCount) }
-			: { mode: 'standard' }
+			: { mode: orderUnitCountMode }
 	);
-	let orderUnitCountLabel = $derived(
-		orderUnitCountSelection.mode === 'fixed'
-			? `${orderUnitCountSelection.units} prodotti/ordine`
-			: 'standard'
-	);
+	let orderUnitCountLabel = $derived.by(() => {
+		if (orderUnitCountSelection.mode === 'fixed') {
+			return `${orderUnitCountSelection.units} prodotti/ordine`;
+		}
+
+		return orderUnitCountSelection.mode === 'random' ? 'random 1-10' : 'standard';
+	});
 	const launchCount = 1000;
 	const orderCount = 1000;
 	const launchBatchSize = 25;
@@ -280,6 +282,16 @@
 						/>
 						<span>Seleziona il numero</span>
 					</label>
+					<label class="inline-flex min-h-10 cursor-pointer items-center gap-2 border border-zinc-200 bg-white px-3 py-2 text-sm font-medium text-zinc-800 transition hover:border-zinc-300">
+						<input
+							class="h-4 w-4 border-zinc-300 text-zinc-950 focus:ring-zinc-950"
+							type="radio"
+							name="order-unit-count-mode"
+							value="random"
+							bind:group={orderUnitCountMode}
+						/>
+						<span>Random</span>
+					</label>
 				</div>
 			</div>
 
@@ -288,7 +300,7 @@
 				<select
 					class="h-10 rounded border border-zinc-300 bg-white px-3 text-sm text-zinc-950 shadow-sm disabled:cursor-not-allowed disabled:bg-zinc-100 disabled:text-zinc-500"
 					bind:value={fixedOrderUnitCount}
-					disabled={orderUnitCountMode === 'standard'}
+					disabled={orderUnitCountMode !== 'fixed'}
 				>
 					{#each fixedOrderUnitCountOptions as option}
 						<option value={option}>{option}</option>

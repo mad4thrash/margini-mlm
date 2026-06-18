@@ -212,6 +212,35 @@ describe('generateRandomOrders', () => {
 		}
 	});
 
+	test('generates random-size orders with one to ten product units', () => {
+		const orders = generateRandomOrders({
+			products,
+			orderCount: 200,
+			seed: 'random-range',
+			orderUnitCountSelection: { mode: 'random' }
+		});
+		const unitCounts = orders.map(countOrderUnits);
+
+		expect(orders).toHaveLength(200);
+		expect(Math.min(...unitCounts)).toBeGreaterThanOrEqual(1);
+		expect(Math.max(...unitCounts)).toBeLessThanOrEqual(10);
+		expect(new Set(unitCounts).size).toBeGreaterThan(1);
+	});
+
+	test('uses deterministic seed support for random-size orders', () => {
+		const orderInput = {
+			products,
+			orderCount: 50,
+			orderUnitCountSelection: { mode: 'random' as const }
+		};
+		const firstRun = generateRandomOrders({ ...orderInput, seed: 'random-seed' });
+		const secondRun = generateRandomOrders({ ...orderInput, seed: 'random-seed' });
+		const differentSeedRun = generateRandomOrders({ ...orderInput, seed: 'different-random-seed' });
+
+		expect(firstRun).toEqual(secondRun);
+		expect(firstRun).not.toEqual(differentSeedRun);
+	});
+
 	test('generates 3x2 orders with exactly 3 or 6 product units', () => {
 		const orders = generateRandomOrders({
 			products,

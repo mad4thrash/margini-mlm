@@ -250,6 +250,54 @@ describe("simulation panel helpers", () => {
 		}
 	});
 
+	test("uses the selected random unit count mode for results and first-launch logs", () => {
+		const scenarios = [scenario("base"), scenario("3x2")];
+		const experimentRun = 18;
+		const orderCount = 12;
+		const orderUnitCountSelection = { mode: "random" } as const;
+		const expectedOrders = generateRandomOrders({
+			products: simulationProducts,
+			orderCount,
+			seed: `${experimentRun}:launch:1:orders`,
+			orderUnitCountSelection,
+		});
+		const expectedOrderUnitCounts = expectedOrders.map(countOrderUnits);
+		const expectedProductCount = countProductsInOrders(expectedOrders);
+
+		const results = createSimulationScenarioResults({
+			products: simulationProducts,
+			scenarios,
+			payoutPercent: 0,
+			experimentRun,
+			launchCount: 1,
+			orderCount,
+			orderUnitCountSelection,
+		});
+		const log = createFirstLaunchSimulationOrderLog({
+			products: simulationProducts,
+			scenarios,
+			experimentRun,
+			orderCount,
+			orderUnitCountSelection,
+		});
+
+		expect(results.map((result) => result.productCount)).toEqual([
+			expectedProductCount,
+			expectedProductCount,
+		]);
+		expect(Math.max(...expectedOrderUnitCounts)).toBeLessThanOrEqual(10);
+		expect(new Set(expectedOrderUnitCounts).size).toBeGreaterThan(1);
+		expect(log.scenarios[0].orders).toHaveLength(10);
+		expect(
+			log.scenarios[0].orders.map((loggedOrder) =>
+				loggedOrder.products.reduce(
+					(total, product) => total + product.quantity,
+					0,
+				),
+			),
+		).toEqual(expectedOrderUnitCounts.slice(0, 10));
+	});
+
 	test("reruns change generated orders while keeping scenarios comparable", () => {
 		const firstRun = createSimulationScenarioResults({
 			products: simulationProducts,
@@ -449,4 +497,8 @@ function countProductsInOrders(orders: { quantity: number }[][]) {
 			total + order.reduce((orderTotal, line) => orderTotal + line.quantity, 0),
 		0,
 	);
+}
+
+function countOrderUnits(order: { quantity: number }[]) {
+	return order.reduce((total, line) => total + line.quantity, 0);
 }

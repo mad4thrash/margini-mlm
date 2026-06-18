@@ -32,7 +32,8 @@ export type SimulationTotals = {
 export type SimulationOrderMode = 'generic' | '3x2' | '4x3';
 export type SimulationOrderUnitCountSelection =
 	| { mode: 'standard' }
-	| { mode: 'fixed'; units: number };
+	| { mode: 'fixed'; units: number }
+	| { mode: 'random' };
 
 type GenericOrderKind = 'single' | 'multiples-of-3' | 'multiples-of-4';
 
@@ -248,6 +249,12 @@ export function generateRandomOrders(input: GenerateRandomOrdersInput): Simulati
 
 		return Array.from({ length: orderCount }, () =>
 			generateOrderWithUnitCount(products, random, unitCount)
+		);
+	}
+
+	if (orderUnitCountSelection.mode === 'random') {
+		return Array.from({ length: orderCount }, () =>
+			generateOrderWithUnitCount(products, random, randomInteger(random, 1, 10))
 		);
 	}
 
