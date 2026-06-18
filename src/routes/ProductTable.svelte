@@ -185,13 +185,7 @@
 			<p class="col-span-2 flex min-h-10 items-center justify-center gap-1 rounded border border-zinc-200 bg-white px-3 text-sm text-zinc-600 sm:col-span-1 sm:justify-start">
 				Payout: <span class="font-semibold text-zinc-950">{formatPercent(payoutPercent)}</span>
 			</p>
-			<a
-				class="inline-flex min-h-10 items-center justify-center gap-2 rounded border border-zinc-300 bg-white px-3 text-sm font-semibold text-zinc-800 shadow-sm transition hover:bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-zinc-950 focus:ring-offset-2"
-				href="#settings"
-			>
-				<span aria-hidden="true">%</span>
-				<span>Impostazioni</span>
-			</a>
+
 			<a
 				class="inline-flex min-h-10 items-center justify-center gap-2 rounded border border-zinc-300 bg-white px-3 text-sm font-semibold text-zinc-800 shadow-sm transition hover:bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-zinc-950 focus:ring-offset-2"
 				href={templateHref}
