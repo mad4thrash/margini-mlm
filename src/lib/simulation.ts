@@ -56,6 +56,7 @@ export type PromotionScenarioId =
 	| 'discount-20'
 	| 'discount-25'
 	| 'discount-30'
+	| 'second-half-price'
 	| '3x2'
 	| '4x3'
 	| '3x2-no-kit'
@@ -69,7 +70,8 @@ export type PromotionScenario = {
 	orderMode: SimulationOrderMode;
 	productDiscountMode?: ProductDiscountMode;
 	discountPercent?: number;
-	bundleGroupSize?: 3 | 4;
+	bundleGroupSize?: 2 | 3 | 4;
+	bundleDiscountPercent?: number;
 	excludeKitFromBundle?: boolean;
 	kitDiscountPercent?: number;
 };
@@ -124,6 +126,13 @@ export const PROMOTION_SCENARIOS: PromotionScenario[] = [
 	{ id: 'discount-20', name: '20 percent', orderMode: 'generic', discountPercent: 20 },
 	{ id: 'discount-25', name: '25 percent', orderMode: 'generic', discountPercent: 25 },
 	{ id: 'discount-30', name: '30 percent', orderMode: 'generic', discountPercent: 30 },
+	{
+		id: 'second-half-price',
+		name: 'Secondo al 50%',
+		orderMode: 'generic',
+		bundleGroupSize: 2,
+		bundleDiscountPercent: 50
+	},
 	{ id: '3x2', name: '3x2', orderMode: '3x2', bundleGroupSize: 3 },
 	{ id: '4x3', name: '4x3', orderMode: '4x3', bundleGroupSize: 4 },
 	{
@@ -338,10 +347,10 @@ function applyPromotionScenarioToOrder(
 				(first, second) =>
 					first.paidGrossPrice - second.paidGrossPrice || first.index - second.index
 			);
-		const freeUnitCount = Math.floor(eligibleUnits.length / scenario.bundleGroupSize);
+		const discountedUnitCount = Math.floor(eligibleUnits.length / scenario.bundleGroupSize);
 
-		for (const unit of eligibleUnits.slice(0, freeUnitCount)) {
-			units[unit.index].discountPercent = 100;
+		for (const unit of eligibleUnits.slice(0, discountedUnitCount)) {
+			units[unit.index].discountPercent = bundleUnitDiscountPercent(unit.discountPercent, scenario);
 		}
 	}
 
@@ -434,10 +443,10 @@ function addBundleOrderTotals(
 		.sort(
 			(first, second) => first.paidGrossPrice - second.paidGrossPrice || first.index - second.index
 		);
-	const freeUnitCount = Math.floor(eligibleUnits.length / (scenario.bundleGroupSize ?? 1));
+	const discountedUnitCount = Math.floor(eligibleUnits.length / (scenario.bundleGroupSize ?? 1));
 
-	for (const unit of eligibleUnits.slice(0, freeUnitCount)) {
-		units[unit.index].discountPercent = 100;
+	for (const unit of eligibleUnits.slice(0, discountedUnitCount)) {
+		units[unit.index].discountPercent = bundleUnitDiscountPercent(unit.discountPercent, scenario);
 	}
 
 	for (const unit of units) {
@@ -449,6 +458,11 @@ function addBundleOrderTotals(
 		totals.supplierCost += margin.supplierCost;
 		totals.marginAmount += margin.marginAmount;
 	}
+}
+
+function bundleUnitDiscountPercent(discountPercent: number, scenario: PromotionScenario): number {
+	const baseDiscount = cappedPercent(discountPercent);
+	return baseDiscount + (100 - baseDiscount) * ((scenario.bundleDiscountPercent ?? 100) / 100);
 }
 
 function cachedUnitMargin(

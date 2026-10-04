@@ -107,6 +107,27 @@ describe("simulation panel helpers", () => {
 		);
 	});
 
+	test("keeps second-half-price pairs within each order when averaging launches", () => {
+		const products: SimulationProduct[] = [{
+			code: "KIT", listPrice: 100, supplierPrice: 10, vatRate: 0,
+			discountPercent: 20, category: "KIT",
+		}];
+		const scenarios = [scenario("base"), scenario("second-half-price")];
+		const selection = createDefaultScenarioSelection();
+		expect(selection).toContain("second-half-price");
+		expect(toggleScenarioSelection(selection, "second-half-price", false)).not.toContain("second-half-price");
+
+		for (const [units, expectedGross, expectedMargin] of [[1, 240, 162], [3, 600, 390]]) {
+			const results = createSimulationScenarioResults({
+				products, scenarios, payoutPercent: 20, experimentRun: 1,
+				launchCount: 2, orderCount: 3, orderUnitCountSelection: { mode: "fixed", units },
+			});
+			expect(results[1].productCount).toBe(results[0].productCount);
+			expect(results[1].totals.grossRevenue).toBeCloseTo(expectedGross);
+			expect(results[1].totals.marginAmount).toBeCloseTo(expectedMargin);
+		}
+	});
+
 	test("uses the same product count for every active scenario in a launch", () => {
 		const results = createSimulationScenarioResults({
 			products: simulationProducts,

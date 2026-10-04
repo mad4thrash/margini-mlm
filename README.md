@@ -78,6 +78,8 @@ La sezione `Simulazioni` usa i prodotti salvati per generare ordini casuali e co
 
 Gli scenari includono No sconti, DB/base, sconti 10%, 20%, 25% e 30%, 3x2, 4x3, 3x2 no KIT e 4x3 no KIT. No sconti forza gli sconti prodotto a 0%; DB/base usa invece gli sconti salvati sui prodotti. Ogni esperimento media 1000 lanci da 1000 ordini ciascuno: dentro ogni lancio, gli stessi ordini vengono riusati per tutti gli scenari selezionati. Con la dimensione ordine standard, ogni lancio genera ordini con 5% a 1 prodotto, 47,5% con multipli di 3 scelti tra 3, 6, 9 e 12 prodotti, e 47,5% con multipli di 4 scelti tra 4, 8 e 12 prodotti. Gli ordini standard hanno al massimo 12 prodotti. Negli scenari no KIT, la categoria `KIT` e esclusa dal conteggio del bundle e riceve lo sconto DB piu 20%.
 
+La promo `Secondo al 50%` applica uno sconto aggiuntivo del 50% al prezzo gia scontato DB su una unita ogni due, scegliendo le meno care dell'intero ordine. Include i KIT e conta le quantita, anche dello stesso prodotto. Con una sola unita non si applica; con tre unita ne sconta una, con quattro ne sconta due. La regola viene applicata separatamente a ogni ordine, anche nei log.
+
 ### Formula margine
 
 ```text
@@ -165,6 +167,8 @@ The `Impostazioni` section saves the payout percentage for sales representatives
 The `Simulazioni` section uses saved products to generate random orders and compare selectable commercial scenarios. All scenarios are active by default and can be removed with checkboxes. The order size can stay on `Standard`, use `Seleziona il numero` to force every simulated order to contain the selected number of product units from 1 to 20, or use `Random` to draw each order size from 1 to 10 product units. `Rilancia simulazione` starts a new experiment and shows average results.
 
 Scenarios include No sconti, DB/base, 10%, 20%, 25%, and 30% discounts, 3x2, 4x3, 3x2 no KIT, and 4x3 no KIT. No sconti forces product discounts to 0%; DB/base uses the discounts saved on products. Each experiment averages 1000 launches of 1000 orders each: inside each launch, the same orders are reused for every selected scenario. With the standard order size, each launch generates orders with 5% at 1 product, 47.5% with multiples of 3 chosen from 3, 6, 9, and 12 products, and 47.5% with multiples of 4 chosen from 4, 8, and 12 products. Standard orders have at most 12 products. In no-KIT scenarios, category `KIT` is excluded from bundle counting and receives the DB discount plus 20%.
+
+The `Secondo al 50%` scenario applies an additional 50% discount to the price after the saved DB discount for one unit per pair, choosing the cheapest units across each order. KIT products and repeated quantities count towards the promotion. One unit gets no additional discount; three units get one half-price unit, and four get two. The rule is applied separately to each order, including in the logs.
 
 ### Margin Formula
 

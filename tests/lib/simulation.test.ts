@@ -73,10 +73,76 @@ describe('promotion scenarios', () => {
 			'discount-20',
 			'discount-25',
 			'discount-30',
+			'second-half-price',
 			'3x2',
 			'4x3',
 			'3x2-no-kit',
 			'4x3-no-kit'
+		]);
+	});
+
+	test('halves the cheapest price after the saved discount and retains VAT, payout and costs', () => {
+		const totals = calculatePromotionScenarioTotals({
+			scenario: scenario('second-half-price'),
+			orders: [[
+				{ product: product({ code: 'A', listPrice: 122, discountPercent: 50, supplierPrice: 10, vatRate: 22 }), quantity: 1 },
+				{ product: product({ code: 'B', listPrice: 80, supplierPrice: 20, vatRate: 0 }), quantity: 1 }
+			]],
+			payoutPercent: 20
+		});
+
+		expect(totals.grossRevenue).toBeCloseTo(110.5);
+		expect(totals.netRevenue).toBeCloseTo(105);
+		expect(totals.payout).toBeCloseTo(22.1);
+		expect(totals.supplierCost).toBeCloseTo(30);
+		expect(totals.marginAmount).toBeCloseTo(52.9);
+		expect(totals.marginPercent).toBeCloseTo(50.38095238);
+	});
+
+	test.each([
+		[1, 80], [2, 120], [3, 200], [4, 240], [5, 320]
+	])('applies second-half-price to complete pairs of %i units including repeated KIT units', (quantity, gross) => {
+		const totals = calculatePromotionScenarioTotals({
+			scenario: scenario('second-half-price'),
+			orders: [[{ product: product({ code: 'KIT', listPrice: 100, discountPercent: 20, category: 'KIT' }), quantity }]],
+			payoutPercent: 0
+		});
+
+		expect(totals.grossRevenue).toBeCloseTo(gross);
+	});
+
+	test('selects the cheapest half of the whole basket without sharing pairs across orders', () => {
+		const totals = calculatePromotionScenarioTotals({
+			scenario: scenario('second-half-price'),
+			orders: [
+				[
+					{ product: scenarioProducts.a, quantity: 1 },
+					{ product: scenarioProducts.b, quantity: 1 },
+					{ product: scenarioProducts.c, quantity: 1 },
+					{ product: scenarioProducts.d, quantity: 1 }
+				],
+				[{ product: scenarioProducts.c, quantity: 1 }],
+				[{ product: scenarioProducts.c, quantity: 1 }]
+			],
+			payoutPercent: 0
+		});
+
+		expect(totals.grossRevenue).toBeCloseTo(79);
+	});
+
+	test('logs paid and half-price units of the same SKU separately using the effective discount', () => {
+		const log = createFirstLaunchOrderLog({
+			experimentRun: 1,
+			launch: 1,
+			scenarios: [scenario('second-half-price')],
+			orders: [[{ product: product({ code: 'A', listPrice: 100, discountPercent: 20 }), quantity: 3 }]]
+		});
+		const order = log.scenarios[0].orders[0];
+
+		expect(order.totalGross).toBe(200);
+		expect(order.products).toEqual([
+			{ code: 'A', category: '', quantity: 1, listPrice: 100, discountPercent: 60, paidGrossPrice: 40, lineGrossTotal: 40 },
+			{ code: 'A', category: '', quantity: 2, listPrice: 100, discountPercent: 20, paidGrossPrice: 80, lineGrossTotal: 160 }
 		]);
 	});
 

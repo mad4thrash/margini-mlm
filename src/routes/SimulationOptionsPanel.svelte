@@ -343,6 +343,13 @@
 		{/each}
 	</div>
 
+	{#if selectedScenarioIds.includes('second-half-price')}
+		<p class="mt-2 text-xs text-zinc-600">
+			Secondo al 50%: ogni 2 unità, una delle meno care è a metà prezzo dopo lo sconto DB,
+			KIT inclusi. Con 4 unità si scontano le 2 meno care.
+		</p>
+	{/if}
+
 	{#if simulationProducts.length === 0}
 		<p class="mt-4 border border-zinc-200 bg-zinc-50 px-3 py-4 text-center text-sm text-zinc-500">
 			Nessun prodotto salvato. Le simulazioni saranno disponibili dopo il salvataggio dei prodotti.
