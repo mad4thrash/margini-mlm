@@ -12,18 +12,21 @@
 		type CsvRowError
 	} from '$lib/csv-products';
 
-	import { createProduct, deleteProduct, importProductsCsv, updateProduct } from './data.remote';
+	import { createProduct, deleteProduct, importProductsCsv, resetProductDiscounts, updateProduct } from './data.remote';
 
 	type Props = {
 		products: ProductTableProduct[];
 		payoutPercent: number;
+		onDiscountsReset?: (products: ProductTableProduct[]) => void;
 	};
 
-	let { products, payoutPercent }: Props = $props();
+	let { products, payoutPercent, onDiscountsReset }: Props = $props();
 	let rows = $state<EditableProductRow[]>([]);
 	let csvErrors = $state<CsvRowError[]>([]);
 	let csvStatus = $state('');
 	let csvIsImporting = $state(false);
+	let discountsIsResetting = $state(false);
+	let discountsStatus = $state('');
 	let productsKey = $derived(
 		products
 			.map(
@@ -51,6 +54,22 @@
 		rows = products.map((product) => createEditableProductRow(product));
 	});
 
+	async function resetDiscounts() {
+		if (discountsIsResetting || csvIsImporting || rows.some((row) => row.isSaving)) return;
+		discountsIsResetting = true;
+		discountsStatus = '';
+		try {
+			const savedProducts = await resetProductDiscounts();
+			for (const row of rows) row.discountPercent = 0;
+			onDiscountsReset?.(savedProducts);
+			discountsStatus = 'Sconti fissi azzerati e salvati per tutti i prodotti.';
+		} catch {
+			discountsStatus = 'Azzeramento non riuscito. Riprova.';
+		} finally {
+			discountsIsResetting = false;
+		}
+	}
+
 	function addProduct() {
 		rows = [createEditableProductRow(), ...rows];
 	}
@@ -68,6 +87,7 @@
 	}
 
 	async function saveRow(row: EditableProductRow) {
+		if (discountsIsResetting) return;
 		row.error = '';
 		row.isSaving = true;
 
@@ -85,6 +105,7 @@
 	}
 
 	async function removeRow(row: EditableProductRow) {
+		if (discountsIsResetting) return;
 		if (row.isNew) {
 			rows = rows.filter((candidate) => candidate.clientId !== row.clientId);
 			return;
@@ -203,7 +224,7 @@
 					class="sr-only"
 					type="file"
 					accept=".csv,text/csv"
-					disabled={csvIsImporting}
+					disabled={csvIsImporting || discountsIsResetting}
 					onchange={handleCsvImport}
 				/>
 			</label>
@@ -217,6 +238,14 @@
 			</a>
 			<button
 				type="button"
+				class="inline-flex min-h-10 cursor-pointer items-center justify-center rounded border border-zinc-300 bg-white px-3 text-sm font-semibold text-zinc-800 shadow-sm transition hover:bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-zinc-950 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
+				disabled={discountsIsResetting || csvIsImporting || rows.length === 0 || rows.some((row) => row.isSaving)}
+				onclick={resetDiscounts}
+			>
+				{discountsIsResetting ? 'Azzero sconti…' : 'Azzera sconti %'}
+			</button>
+			<button
+				type="button"
 				class="col-span-2 inline-flex min-h-10 cursor-pointer items-center justify-center gap-2 rounded bg-zinc-950 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-zinc-950 focus:ring-offset-2 sm:col-span-1"
 				onclick={addProduct}
 			>
@@ -225,6 +254,12 @@
 			</button>
 		</div>
 	</div>
+
+	{#if discountsStatus}
+		<p class="border border-zinc-200 bg-white px-4 py-3 text-sm text-zinc-700 shadow-sm" role="status">
+			{discountsStatus}
+		</p>
+	{/if}
 
 	{#if csvStatus || csvErrors.length > 0}
 		<div
@@ -353,7 +388,7 @@
 									<button
 										type="button"
 										class="cursor-pointer rounded border border-zinc-950 bg-zinc-950 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-60"
-										disabled={row.isSaving}
+										disabled={row.isSaving || discountsIsResetting}
 										onclick={() => saveRow(row)}
 									>
 										{row.isSaving ? 'Salvo' : 'Salva'}
@@ -361,7 +396,7 @@
 									<button
 										type="button"
 										class="cursor-pointer rounded border border-red-200 bg-white px-3 py-1.5 text-xs font-semibold text-red-700 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
-										disabled={row.isSaving}
+										disabled={row.isSaving || discountsIsResetting}
 										onclick={() => removeRow(row)}
 									>
 										{row.pendingDelete ? 'Conferma' : 'Elimina'}
@@ -491,7 +526,7 @@
 					<button
 						type="button"
 						class="h-10 cursor-pointer rounded border border-zinc-950 bg-zinc-950 px-3 text-sm font-semibold text-white transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-60"
-						disabled={row.isSaving}
+						disabled={row.isSaving || discountsIsResetting}
 						onclick={() => saveRow(row)}
 					>
 						{row.isSaving ? 'Salvo' : 'Salva'}
@@ -499,7 +534,7 @@
 					<button
 						type="button"
 						class="h-10 cursor-pointer rounded border border-red-200 bg-white px-3 text-sm font-semibold text-red-700 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
-						disabled={row.isSaving}
+						disabled={row.isSaving || discountsIsResetting}
 						onclick={() => removeRow(row)}
 					>
 						{row.pendingDelete ? 'Conferma' : 'Elimina'}

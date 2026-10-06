@@ -8,6 +8,7 @@ import {
 	getSettings as getSettingsRecord,
 	importProducts as importProductRecords,
 	listProducts,
+	resetProductDiscounts as resetProductDiscountRecords,
 	updateProduct as updateProductRecord,
 	updateSettings as updateSettingsRecord
 } from '$lib/server/products';
@@ -62,6 +63,11 @@ export const updateProduct = command(productUpdateSchema, async (input) => {
 export const deleteProduct = command(idSchema, async (input) => {
 	await deleteProductRecord(prisma, input);
 	getProducts().set(await listProducts(prisma));
+});
+
+export const resetProductDiscounts = command(async () => {
+	await resetProductDiscountRecords(prisma);
+	return listProducts(prisma);
 });
 
 export const importProductsCsv = command(productImportSchema, async (input) => {

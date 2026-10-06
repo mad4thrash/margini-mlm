@@ -12,6 +12,7 @@ import {
 	getSettings,
 	importProducts,
 	listProducts,
+	resetProductDiscounts,
 	updateProduct,
 	updateSettings
 } from '../../../src/lib/server/products';
@@ -46,6 +47,34 @@ afterEach(async () => {
 });
 
 describe('product data access', () => {
+	it('resets every saved discount without changing other product data or payout', async () => {
+		const originals = await Promise.all([5, 12.5, 0].map((discountPercent, index) =>
+			createProduct(db, {
+				code: `RESET-${index}`,
+				description: `Product ${index}`,
+				category: 'Reset',
+				listPrice: 50 + index,
+				supplierPrice: 18 + index,
+				vatRate: 22,
+				discountPercent
+			})
+		));
+		await updateSettings(db, { payoutPercent: 12.5 });
+
+		await resetProductDiscounts(db);
+
+		const saved = await listProducts(db);
+		expect(saved).toHaveLength(3);
+		for (const original of originals) {
+			const { updatedAt, ...unchanged } = original;
+			expect(saved.find((product) => product.id === original.id)).toMatchObject({
+				...unchanged,
+				discountPercent: 0
+			});
+		}
+		await expect(getSettings(db)).resolves.toMatchObject({ payoutPercent: 12.5 });
+	});
+
 	it('lists products ordered by category then code', async () => {
 		await createProduct(db, {
 			code: 'B-002',

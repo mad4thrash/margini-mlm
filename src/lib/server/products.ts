@@ -68,6 +68,12 @@ export async function deleteProduct(db: PrismaClient, input: ProductDeleteInput)
 	});
 }
 
+export async function resetProductDiscounts(db: PrismaClient) {
+	return db.product.updateMany({
+		data: { discountPercent: 0 }
+	});
+}
+
 export async function importProducts(
 	db: PrismaClient,
 	products: ProductInput[]

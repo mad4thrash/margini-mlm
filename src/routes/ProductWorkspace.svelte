@@ -13,6 +13,10 @@
 	let { productsQuery, payoutPercent: initialPayoutPercent }: Props = $props();
 	let payoutPercent = $state(0);
 	let lastInitialPayoutPercent = $state<number | null>(null);
+	let discountReset = $state.raw<{
+		source: ProductTableProduct[];
+		products: ProductTableProduct[];
+	} | null>(null);
 
 	$effect(() => {
 		if (initialPayoutPercent !== lastInitialPayoutPercent) {
@@ -41,8 +45,15 @@
 			</p>
 		</section>
 	{:then products}
-		<SimulationOptionsPanel {products} {payoutPercent} />
-		<ProductTable {products} {payoutPercent} />
+		<SimulationOptionsPanel
+			products={discountReset?.source === products ? discountReset.products : products}
+			{payoutPercent}
+		/>
+		<ProductTable
+			{products}
+			{payoutPercent}
+			onDiscountsReset={(savedProducts) => { discountReset = { source: products, products: savedProducts }; }}
+		/>
 	{:catch}
 		<section class="flex flex-col gap-4">
 			<div class="flex flex-col gap-3 border-b border-zinc-200 pb-4 lg:flex-row lg:items-end lg:justify-between">
